@@ -1,0 +1,15 @@
+{
+  "name": "discord-evtc",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/discord-evtc.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "puppeteer": "^3.3.0",
+    "puppeteer-core": "^3.3.0"
+  }
+}
