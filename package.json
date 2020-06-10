@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "chokidar": "^3.4.0",
     "discord.js": "^12.2.0",
     "puppeteer": "^3.3.0",
     "puppeteer-core": "^3.3.0"
