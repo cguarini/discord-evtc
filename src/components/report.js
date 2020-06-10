@@ -4,10 +4,11 @@ const config = JSON.parse(fs.readFileSync('./res/config.json', 'utf8'));
 const util = require('util');
 const exec = util.promisify( require( 'child_process' ).exec);
 
-async function runReport(filename) {
+async function runReport(filename, cb) {
   await parseToHTML(filename);
   htmlFilename = filename.split('.')[0] + '_wvw_kill.html';
   await screenshotReport(htmlFilename);
+  cb(htmlFilename);
 }
 
 //Uses GW2EI to parse the .evtc file to an html report
@@ -28,20 +29,20 @@ async function screenshotReport(fp) {
       height : 1080,
       deviceScaleFactor : 1
   })
-  await page.screenshot({path: 'test/out.png'});
+  //await page.screenshot({path: 'test/out.png'});
 
   //Screenshot damage
   await page.evaluate(() => {
     document.getElementsByClassName("ei-header")[0].style.cssText = 'display : none !important'; //Remove header
     document.getElementById("actors").style.cssText = 'display : none !important'; //Remove list of players
   });
-  await page.screenshot({path: 'test/out-damage.png'});
+  await page.screenshot({path: 'out/out-damage.png'});
 
   //Screenshot support
   await page.evaluate(() => {
     document.getElementsByClassName("nav-link")[9].click(); //Switch to support view
   });
-  await page.screenshot({path: 'test/out-support.png'});
+  await page.screenshot({path: 'out/out-support.png'});
 
 
   await browser.close();
