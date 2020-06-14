@@ -18,13 +18,14 @@ client.login(DISCORD_TOKEN);
 client.on('message', async (message) => {
 
   if (message.content === '!raidStats') {
-    await statTable.createStatScreenshot();
-    message.channel.send('Statistics for the raid so far...', {
-      files : [
-        "./out/stat-table.png",
-        "./out/leaderboard.txt"
-      ]
-    });
+
+    let statTables = statTable.getStatTable();
+
+    for( i = 0; i < statTables.length; i++){
+      str = `Stat Table ${i + 1} of ${statTables.length}\n`
+      message.channel.send(str + '```' + statTables[i] + '```')
+    }
+
   }
 
 });

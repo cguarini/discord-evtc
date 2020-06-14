@@ -119,22 +119,31 @@ function getStatTable() {
         players.push(stats);
     }
 
+    console.log(players)
     //Sort by highest damage, up for debate
-    players = players.sort( (player1, player2) => {
-        return player1.damage - player2.damage;
+    players.sort( function(player1, player2){
+        return  player2[3] - player1[3];
     })
-
+    console.log(players)
     //Create array
-    let tableArray = [headers];
+    let tableArrays = [];
     for( i = 0; i < players.length; i++){
-        tableArray.push(players[i]);
+        if(tableArrays.length < Math.floor(i / 15) + 1){
+            tableArrays.push([headers]);
+        }
+        tableArrays[Math.floor(i / 15)].push(players[i]);
     }
-    //Create ascii table
-    let statTable = table(
-                        tableArray,
-                        {align : [ 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' ]}
-                    );
-    return statTable;
+    //Create ascii tables
+    let statTables = []
+    for(i = 0; i < tableArrays.length; i++){
+        statTables.push(
+            table(
+                tableArrays[i],
+                {align : [ 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' ]}
+            )
+        );
+    }
+    return statTables;
 
 }
 
@@ -155,7 +164,7 @@ async function createStatScreenshot(){
     //Create ascii formatted table
     let statTable = await getStatTable();
     //Save to file
-    fs.writeFileSync('./out/leaderboard.txt', statTable);
+    //fs.writeFileSync('./out/leaderboard.txt', statTable);
     //Screenshot file in chromium
     await screenshotStatTable(config.OUTPUT_DIR + 'leaderboard.txt');
 }
