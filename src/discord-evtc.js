@@ -14,20 +14,23 @@ client.login(DISCORD_TOKEN);
 
 
 
-
+//Watch the log directory, waiting for arcdps to dump log files
 chokidar.watch(config.EVTC_WATCH_DIR, {
   awaitWriteFinish : true,
   ignoreInitial :  true
 }).on('add', async (path) => {
+
   console.log(path);
   let pathArray = path.split('\\');
   let filename = pathArray[pathArray.length - 1];
   console.log(filename);
+
   //Make sure we haven't already processed this file
   if (!(filename in processedFiles)) {
     processedFiles.set(filename, true);
     report.runReport(filename, (htmlFilename) => {
-      client.channels.fetch("719334198997155960").then( channel => {
+
+      client.channels.fetch(config.DISCORD_CHANNEL_ID).then( channel => {
         channel.send("Reports for Last Fight at " + new Date(), {
           files : [
             "./out/out-damage.png",
