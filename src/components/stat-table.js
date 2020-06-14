@@ -119,12 +119,11 @@ function getStatTable() {
         players.push(stats);
     }
 
-    console.log(players)
     //Sort by highest damage, up for debate
     players.sort( function(player1, player2){
         return  player2[3] - player1[3];
     })
-    console.log(players)
+    
     //Create array
     let tableArrays = [];
     for( i = 0; i < players.length; i++){
