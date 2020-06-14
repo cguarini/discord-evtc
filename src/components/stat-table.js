@@ -1,5 +1,8 @@
 let fs = require('fs');
 let table = require('text-table');
+const config = JSON.parse(fs.readFileSync('./res/config.json', 'utf8'));
+const puppeteer = require('puppeteer');
+
 
 //Hashmap that will hold player states
 let playerStats = new Map();
@@ -42,12 +45,12 @@ async function addFightToLeaderboard(fp) {
         let statObj = playerStats[accountId];
 
         //Add character name if need be
-        if( !(player.name in statObj.characters) ){
+        if( !(statObj.characters.includes(player.name)) ){
             statObj.characters.push(player.name);
         }
 
         //Parse out the offensive, defensive and support stats from JSON
-        let offensiveStats = player.dpsAll[0];
+        let offensiveStats = player.dpsTargets[0][0];
         let defensiveStats = player.defenses[0];
         let supportStats = player.support[0];
 
@@ -89,6 +92,10 @@ async function addFightToLeaderboard(fp) {
 
 }
 
+/**
+ * Returns the stat map object as an ascii table
+ * Returns array of tables, as discord is limited to 2000 characters per mesage
+ */
 function getStatTable() {
 
     //Create stat table header row
@@ -111,20 +118,51 @@ function getStatTable() {
              statObj.downs, statObj.deaths];
         players.push(stats);
     }
-    //console.log(players)
 
-    players.sort( (player1, player2) => {
+    //Sort by highest damage, up for debate
+    players = players.sort( (player1, player2) => {
         return player1.damage - player2.damage;
     })
 
+    //Create array
     let tableArray = [headers];
     for( i = 0; i < players.length; i++){
-        tableArray.push(players[i])
+        tableArray.push(players[i]);
     }
+    //Create ascii table
     let statTable = table(
-        tableArray,
-        {align : [ 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' ]});
+                        tableArray,
+                        {align : [ 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' ]}
+                    );
+    return statTable;
 
 }
 
-addFightToLeaderboard('./input/test_wvw_kill.json');
+async function screenshotStatTable(fp) {
+    //Open HTML file in headless chrome browser
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    await page.goto('file:///' +  fp, {waitUntil: 'networkidle2'});
+    await page.setViewport({
+        width : 1200,
+        height : 600,
+        deviceScaleFactor : 1
+    });
+    await page.screenshot({path: 'out/stat-table.png'});
+}
+
+async function createStatScreenshot(){
+    //Create ascii formatted table
+    let statTable = await getStatTable();
+    //Save to file
+    fs.writeFileSync('./out/leaderboard.txt', statTable);
+    //Screenshot file in chromium
+    await screenshotStatTable(config.OUTPUT_DIR + 'leaderboard.txt');
+}
+
+module.exports = {
+    addFightToLeaderboard : addFightToLeaderboard,
+    getStatTable : getStatTable,
+    createStatScreenshot : createStatScreenshot,
+    
+}

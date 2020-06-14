@@ -4,6 +4,8 @@ const fs = require('fs');
 const chokidar = require('chokidar');
 const config = JSON.parse(fs.readFileSync('./res/config.json', 'utf8'));
 const report = require('./components/report');
+const statTable = require('./components/stat-table');
+
 
 const DISCORD_TOKEN = config.DISCORD_TOKEN;
 let processedFiles = new Map();
@@ -12,7 +14,20 @@ client.on('ready', () => {
 });
 client.login(DISCORD_TOKEN);
 
+//Print leaderboards when message is sent
+client.on('message', async (message) => {
 
+  if (message.content === '!raidStats') {
+    await statTable.createStatScreenshot();
+    message.channel.send('Statistics for the raid so far...', {
+      files : [
+        "./out/stat-table.png",
+        "./out/leaderboard.txt"
+      ]
+    });
+  }
+
+});
 
 //Watch the log directory, waiting for arcdps to dump log files
 chokidar.watch(config.EVTC_WATCH_DIR, {

@@ -3,16 +3,25 @@ const fs = require('fs');
 const config = JSON.parse(fs.readFileSync('./res/config.json', 'utf8'));
 const util = require('util');
 const exec = util.promisify( require( 'child_process' ).exec);
+const statTable = require('./stat-table');
 
 async function runReport(filename, cb) {
-  await parseToHTML(filename);
-  htmlFilename = filename.split('.')[0] + '_wvw_kill.html';
+
+  //Parse the evtc file into HTML and JSON
+  await parseEvtc(filename);
+  let htmlFilename = filename.split('.')[0] + '_wvw_kill.html';
+
+  //Run the JSON leaderboard parsing asynchronously
+  let jsonFilename = ('./input/' + filename.split('.')[0] + '_wvw_kill.json');
+  statTable.addFightToLeaderboard(jsonFilename);
+
+  //Screenshot the html report and run the callback function
   await screenshotReport(htmlFilename);
   cb(htmlFilename);
 }
 
-//Uses GW2EI to parse the .evtc file to an html report
-async function parseToHTML(filename) {
+//Uses GW2EI to parse the .evtc file to an html report and JSON log
+async function parseEvtc(filename) {
   let command = config.PARSER_EXE + ' -p -c ' + config.PARSER_CONF + ' ' + config.LOG_SAVE_PATH + '\\' + filename;
   let {stdout, stderr} = await exec(command);
   console.log(stdout);
@@ -28,7 +37,7 @@ async function screenshotReport(fp) {
       width : 1920,
       height : 1080,
       deviceScaleFactor : 1
-  })
+  });
   //await page.screenshot({path: 'test/out.png'});
 
   //Screenshot damage
@@ -50,6 +59,6 @@ async function screenshotReport(fp) {
 
 module.exports = {
   runReport : runReport,
-  parseToHTML : parseToHTML,
+  parseEvtc : parseEvtc,
   screenshotReport : screenshotReport,
 }
