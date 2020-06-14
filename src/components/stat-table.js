@@ -14,7 +14,7 @@ async function addFightToLeaderboard(fp) {
     let fightStats = await JSON.parse(file);
 
     //Loop through each player in the fight
-    fightStats.players.forEach( async (player) => {
+    await fightStats.players.forEach(  (player) => {
 
         //account id will act as our key, meaning it will merge anyone who character swaps.
         let accountId = player.account;
@@ -84,10 +84,47 @@ async function addFightToLeaderboard(fp) {
         //Save statistics back to the map
         playerStats[accountId] = statObj;
 
-    });
+
+    });    
 
 }
 
+function getStatTable() {
 
+    //Create stat table header row
+    let headers = ['Account', 'Characters', 'Fights', 'Damage', 'Cleanses', 'Strips', 'Stab Uptime', 'Alac Uptime', 'Downs', 'Deaths'];
+
+    //Add player statistics to stat table
+    let players = [];
+    for(accountId in playerStats){
+        let statObj = playerStats[accountId];
+        let charactersStr = '';
+        for( i = 0; i < statObj.characters.length; i++){
+            if(i > 0){
+                charactersStr += ' , ';
+            }
+            charactersStr += statObj.characters[i];
+        }
+        let stats = [accountId, charactersStr, statObj.fightsParticipated,
+             statObj.damage, statObj.cleanses, statObj.strips,
+             (statObj.stabUptime / statObj.totalActiveTime).toFixed(2), (statObj.alacUptime / statObj.totalActiveTime).toFixed(2),
+             statObj.downs, statObj.deaths];
+        players.push(stats);
+    }
+    //console.log(players)
+
+    players.sort( (player1, player2) => {
+        return player1.damage - player2.damage;
+    })
+
+    let tableArray = [headers];
+    for( i = 0; i < players.length; i++){
+        tableArray.push(players[i])
+    }
+    let statTable = table(
+        tableArray,
+        {align : [ 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' ]});
+
+}
 
 addFightToLeaderboard('./input/test_wvw_kill.json');
