@@ -19,7 +19,7 @@ client.on('message', async (message) => {
 
   if (message.content === '!raidStats') {
 
-    let statTables = statTable.getStatTable();
+    let statTables = statTable.getSizedStatTables();
 
     for( i = 0; i < statTables.length; i++){
       str = `Stat Table ${i + 1} of ${statTables.length}\n`

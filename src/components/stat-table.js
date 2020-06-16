@@ -123,27 +123,58 @@ function getStatTable() {
     players.sort( function(player1, player2){
         return  player2[3] - player1[3];
     })
-    
-    //Create array
-    let tableArrays = [];
-    for( i = 0; i < players.length; i++){
-        if(tableArrays.length < Math.floor(i / 15) + 1){
-            tableArrays.push([headers]);
-        }
-        tableArrays[Math.floor(i / 15)].push(players[i]);
-    }
-    //Create ascii tables
-    let statTables = []
-    for(i = 0; i < tableArrays.length; i++){
-        statTables.push(
-            table(
-                tableArrays[i],
-                {align : [ 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' ]}
-            )
-        );
-    }
-    return statTables;
 
+    //Create array
+    let tableArray = [headers];
+    for( i = 0; i < players.length; i++){
+        tableArray.push(players[i]);
+    }
+
+    //Create ascii table
+    let statTable = table(
+        tableArray,
+        {align : [ 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' ]}
+    );
+
+    //Write backup to file
+    fs.writeFile('./out/stat-table.txt', statTable, () => {});
+
+    return statTable;
+
+}
+
+/**
+ * Returns an array of stat tables no larger than 1800 characters each
+ */
+function getSizedStatTables(){
+
+    //Get the ASCII formatted stat table
+    let statTable = getStatTable();
+
+    //Split it by newlines
+    let tableArray = statTable.split('\n');
+
+    //Maximum row length will be the header length
+    let header = tableArray[0];
+    let maxRowLength = header.length + 1;
+    
+    //Find amount of rows available per table
+    const reserved = 50;//Reserved for discord messaging
+    let dataSpace = 2000 - maxRowLength - reserved;//Chars available for data in each message
+    let rowsPerMessage = (dataSpace / maxRowLength) - 1;//Rows per message, subtract header
+
+
+    //Add rows to messages
+    let messageArray = [];
+    for(let i = 1; i < tableArray.length; i++){
+        //Create a new message if previous one is full
+        if(messageArray.length < Math.floor(i / rowsPerMessage) + 1){
+            messageArray.push(header + '\n');
+        }
+        //Add row to message
+        messageArray[Math.floor(i / rowsPerMessage)] += (tableArray[i] + '\n');
+    }
+    return messageArray;
 }
 
 async function screenshotStatTable(fp) {
@@ -172,5 +203,5 @@ module.exports = {
     addFightToLeaderboard : addFightToLeaderboard,
     getStatTable : getStatTable,
     createStatScreenshot : createStatScreenshot,
-    
+    getSizedStatTables : getSizedStatTables,
 }
