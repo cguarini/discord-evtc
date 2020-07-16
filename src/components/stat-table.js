@@ -34,6 +34,8 @@ async function addFightToLeaderboard(fp) {
                 strips : 0,
                 stabUptime : 0,
                 alacUptime : 0,
+                dodges : 0,
+                distance : 0,
                 downs : 0,
                 deaths : 0,
             };
@@ -53,6 +55,7 @@ async function addFightToLeaderboard(fp) {
         let offensiveStats = player.dpsTargets[0][0];
         let defensiveStats = player.defenses[0];
         let supportStats = player.support[0];
+        let generalStats = player.statsAll[0];
 
         //Find buff uptime % 
         //Stability
@@ -81,6 +84,8 @@ async function addFightToLeaderboard(fp) {
         statObj.strips += supportStats.boonStrips;
         statObj.stabUptime += activeTime * stabUptime;
         statObj.alacUptime += activeTime * alacUptime;
+        statObj.dodges += defensiveStats.dodgeCount;
+        statObj.distance += generalStats.stackDist * activeTime; // to average across all fights
         statObj.downs += defensiveStats.downCount;
         statObj.deaths += defensiveStats.deadCount;
 
@@ -96,10 +101,10 @@ async function addFightToLeaderboard(fp) {
  * Returns the stat map object as an ascii table
  * Returns array of tables, as discord is limited to 2000 characters per mesage
  */
-function getStatTable() {
+function getStatTable(cb) {
 
     //Create stat table header row
-    let headers = ['Account', 'Characters', 'Fights', 'Damage', 'Cleanses', 'Strips', 'Stab Uptime', 'Alac Uptime', 'Downs', 'Deaths'];
+    let headers = ['Account', 'Characters', 'Fights', 'Damage', 'Cleanses', 'Strips', 'Stab', 'Alac', 'Dodges', 'Distance', 'Downs', 'Deaths'];
 
     //Add player statistics to stat table
     let players = [];
@@ -115,6 +120,7 @@ function getStatTable() {
         let stats = [accountId, charactersStr, statObj.fightsParticipated,
              statObj.damage, statObj.cleanses, statObj.strips,
              (statObj.stabUptime / statObj.totalActiveTime).toFixed(2), (statObj.alacUptime / statObj.totalActiveTime).toFixed(2),
+             statObj.dodges, Math.round((statObj.distance / statObj.totalActiveTime)),
              statObj.downs, statObj.deaths];
         players.push(stats);
     }
@@ -133,11 +139,11 @@ function getStatTable() {
     //Create ascii table
     let statTable = table(
         tableArray,
-        {align : [ 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' ]}
+        {align : [ 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l', 'l', 'l' ]}
     );
 
     //Write backup to file
-    fs.writeFile('./out/stat-table.txt', statTable, () => {});
+    fs.writeFile('./out/stat-table.txt', statTable, cb);
 
     return statTable;
 
@@ -146,10 +152,10 @@ function getStatTable() {
 /**
  * Returns an array of stat tables no larger than 1800 characters each
  */
-function getSizedStatTables(){
+function getSizedStatTables(cb){
 
     //Get the ASCII formatted stat table
-    let statTable = getStatTable();
+    let statTable = getStatTable(cb);
 
     //Split it by newlines
     let tableArray = statTable.split('\n');

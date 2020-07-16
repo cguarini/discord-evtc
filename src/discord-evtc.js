@@ -19,7 +19,13 @@ client.on('message', async (message) => {
 
   if (message.content === '!raidStats') {
 
-    let statTables = statTable.getSizedStatTables();
+    let statTables = statTable.getSizedStatTables( () => {
+      message.channel.send('', {
+        files : [
+          './out/stat-table.txt'
+        ]
+      })
+    });
 
     for( i = 0; i < statTables.length; i++){
       str = `Stat Table ${i + 1} of ${statTables.length}\n`
