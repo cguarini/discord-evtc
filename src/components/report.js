@@ -4,6 +4,7 @@ const config = JSON.parse(fs.readFileSync('./res/config.json', 'utf8'));
 const util = require('util');
 const exec = util.promisify( require( 'child_process' ).exec);
 const statTable = require('./stat-table');
+const path = require('path')
 
 async function runReport(filename, cb) {
 
@@ -32,7 +33,9 @@ async function screenshotReport(fp) {
   //Open HTML file in headless chrome browser
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
-  await page.goto('file:///' + config.HTML_WATCH_DIR +'/' + fp, {waitUntil: 'networkidle2'});
+  let file = path.resolve(`./${config.HTML_WATCH_DIR}/${fp}`)
+  
+  await page.goto(`file:///${file}`, {waitUntil: 'networkidle2'});
   await page.setViewport({
       width : 1920,
       height : 1080,
