@@ -85,7 +85,7 @@ async function addFightToLeaderboard(fp) {
         statObj.stabUptime += activeTime * stabUptime;
         statObj.alacUptime += activeTime * alacUptime;
         statObj.dodges += defensiveStats.dodgeCount;
-        statObj.distance += generalStats.stackDist * activeTime; // to average across all fights
+        statObj.distance += generalStats.distToCom * activeTime; // to average across all fights
         statObj.downs += defensiveStats.downCount;
         statObj.deaths += defensiveStats.deadCount;
 
@@ -101,7 +101,7 @@ async function addFightToLeaderboard(fp) {
  * Returns the stat map object as an ascii table
  * Returns array of tables, as discord is limited to 2000 characters per mesage
  */
-function getStatTable(cb) {
+function getStatTable(sortStr, cb) {
 
     //Create stat table header row
     let headers = ['Account', 'Characters', 'Fights', 'Damage', 'Cleanses', 'Strips', 'Stab', 'Alac', 'Dodges', 'Distance', 'Downs', 'Deaths'];
@@ -125,9 +125,22 @@ function getStatTable(cb) {
         players.push(stats);
     }
 
+    let sortIndex = 3;//Default to damage
+    //Determine which column we're sorting by
+    for(let i = 0; i < headers.length; i++){
+        if(headers[i].toUpperCase().includes(sortStr.toUpperCase())){
+            sortIndex = i;
+            break;
+        }
+    }
+
     //Sort by highest damage, up for debate
     players.sort( function(player1, player2){
-        return  player2[3] - player1[3];
+        //Separate sorting between numbers and strings
+        if(isNaN(player1[sortIndex])){
+            return player1[sortIndex].toUpperCase().localeCompare(player2[sortIndex].toUpperCase());
+        }
+        return  player2[sortIndex] - player1[sortIndex];
     })
 
     //Create array
@@ -152,10 +165,10 @@ function getStatTable(cb) {
 /**
  * Returns an array of stat tables no larger than 1800 characters each
  */
-function getSizedStatTables(cb){
+function getSizedStatTables(sortStr, cb){
 
     //Get the ASCII formatted stat table
-    let statTable = getStatTable(cb);
+    let statTable = getStatTable(sortStr, cb);
 
     //Split it by newlines
     let tableArray = statTable.split('\n');
