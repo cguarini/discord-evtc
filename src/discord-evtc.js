@@ -17,9 +17,18 @@ client.login(DISCORD_TOKEN);
 //Print leaderboards when message is sent
 client.on('message', async (message) => {
 
-  if (message.content === '!raidStats') {
+  //Split messages into parameters
+  let params = message.content.split(' ');
+  let sortStr = 'damage';//default search to damage
 
-    let statTables = statTable.getSizedStatTables( () => {
+  if(params.length > 1){
+    sortStr = params[1];
+  }
+
+  //Display table of accumulated raid stats
+  if (params[0] === '!raidStats') {
+
+    let statTables = statTable.getSizedStatTables(sortStr, () => {
       message.channel.send('', {
         files : [
           './out/stat-table.txt'
