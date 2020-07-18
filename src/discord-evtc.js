@@ -5,6 +5,7 @@ const chokidar = require('chokidar');
 const config = JSON.parse(fs.readFileSync('./res/config.json', 'utf8'));
 const report = require('./components/report');
 const statTable = require('./components/stat-table');
+const { getStatTable } = require('./components/stat-table');
 
 
 const DISCORD_TOKEN = config.DISCORD_TOKEN;
@@ -28,13 +29,13 @@ client.on('message', async (message) => {
   //Display table of accumulated raid stats
   if (params[0] === '!raidStats') {
 
-    let statTables = statTable.getSizedStatTables(sortStr, () => {
+    let statTables = statTable.getSizedStatTables(getStatTable(sortStr, () => {
       message.channel.send('', {
         files : [
           './out/stat-table.txt'
         ]
       })
-    });
+    }));
 
     for( i = 0; i < statTables.length; i++){
       str = `Stat Table ${i + 1} of ${statTables.length}\n`
@@ -44,6 +45,42 @@ client.on('message', async (message) => {
   }
 
 });
+
+async function postSquadStatTable(statTables) {
+
+  let channel = await client.channels.fetch(config.DISCORD_CHANNEL_ID);
+
+  for( i = 0; i < statTables.length; i++){
+    str = `Squad Stat Table ${i + 1} of ${statTables.length}\n`
+    channel.send(str + '```' + statTables[i] + '```')
+  }
+}
+
+async function postEnemyStatTable(statTables) {
+  let channel = await client.channels.fetch(config.DISCORD_CHANNEL_ID);
+
+  for( i = 0; i < statTables.length; i++){
+    str = `Stats for Enemy Players as a whole.\n`
+    channel.send(str + '```' + statTables[i] + '```')
+  }
+}
+
+async function postHtml(htmlFilename) {
+  client.channels.fetch(config.DISCORD_CHANNEL_ID).then( channel => {
+    channel.send("", {
+      files : [
+        "./input/" + htmlFilename,
+      ]
+    });
+  });
+}
+
+async function postFightStatsHeader(fightObj) {
+  client.channels.fetch(config.DISCORD_CHANNEL_ID).then( channel => {
+    let header = `Reports for fight on ${fightObj.map} lasting ${fightObj.duration}`
+    channel.send(header);
+  });
+}
 
 //Watch the log directory, waiting for arcdps to dump log files
 chokidar.watch(config.EVTC_WATCH_DIR, {
@@ -59,20 +96,7 @@ chokidar.watch(config.EVTC_WATCH_DIR, {
   //Make sure we haven't already processed this file
   if (!(filename in processedFiles)) {
     processedFiles.set(filename, true);
-    report.runReport(filename, (htmlFilename) => {
-
-      client.channels.fetch(config.DISCORD_CHANNEL_ID).then( channel => {
-        channel.send("Reports for Last Fight at " + new Date(), {
-          files : [
-            "./out/out-damage.png",
-            "./out/out-support.png",
-            "./input/" + htmlFilename,
-          ]
-        });
-
-      })
-      
-    });
+    report.runAsciiReport(filename, postFightStatsHeader, postSquadStatTable, postEnemyStatTable, postHtml);
   }
 
 });

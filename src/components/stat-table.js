@@ -16,6 +16,13 @@ async function addFightToLeaderboard(fp) {
     let file = fs.readFileSync(fp);
     let fightStats = await JSON.parse(file);
 
+    let fightObj = {
+        map : fightStats.fightName,
+        duration : fightStats.duration,
+        playerList : [],
+        enemyData : {}
+    };
+
     //Loop through each player in the fight
     await fightStats.players.forEach(  (player) => {
 
@@ -45,6 +52,8 @@ async function addFightToLeaderboard(fp) {
 
         //Retrieve stats from previouis fights for this player
         let statObj = playerStats[accountId];
+        //Stats for this specific fight
+        let fightStatObj = {};
 
         //Add character name if need be
         if( !(statObj.characters.includes(player.name)) ){
@@ -76,6 +85,25 @@ async function addFightToLeaderboard(fp) {
 
         let activeTime = player.activeTimes[0];
 
+        //Create fight specific stats
+        fightStatObj.account = accountId;
+        fightStatObj.character = player.name;
+        fightStatObj.totalActiveTime = activeTime;
+        fightStatObj.fightsParticipated = 1;
+        fightStatObj.damage = offensiveStats.damage;
+        fightStatObj.cleanses = supportStats.condiCleanse + supportStats.condiCleanseSelf;
+        fightStatObj.strips = supportStats.boonStrips;
+        fightStatObj.stabUptime = stabUptime;
+        fightStatObj.alacUptime = alacUptime;
+        fightStatObj.dodges = defensiveStats.dodgeCount;
+        fightStatObj.distance = generalStats.distToCom;
+        fightStatObj.downs = defensiveStats.downCount;
+        fightStatObj.deaths = defensiveStats.deadCount;
+
+        //Save fight specific stats
+        fightObj.playerList.push(fightStatObj)
+
+    
         //Add current fight statistics to the previous fights
         statObj.totalActiveTime += activeTime
         statObj.fightsParticipated += 1;
@@ -85,16 +113,104 @@ async function addFightToLeaderboard(fp) {
         statObj.stabUptime += activeTime * stabUptime;
         statObj.alacUptime += activeTime * alacUptime;
         statObj.dodges += defensiveStats.dodgeCount;
-        statObj.distance += generalStats.distToCom * activeTime; // to average across all fights
+        statObj.distance += (generalStats.distToCom * activeTime); // to average across all fights
         statObj.downs += defensiveStats.downCount;
         statObj.deaths += defensiveStats.deadCount;
 
         //Save statistics back to the map
         playerStats[accountId] = statObj;
-
-
     });    
 
+    //Save enemy fight data
+    let enemyStats = fightStats.targets[0];
+    let enemyDpsStats = enemyStats.dpsAll[0]
+    fightObj.enemyData = {
+        totalDamage : enemyDpsStats.damage,
+        powerDamage : enemyDpsStats.powerDamage,
+        powerDps : enemyDpsStats.powerDps,
+        condiDamage : enemyDpsStats.condiDamage,
+        condiDps : enemyDpsStats.condiDps
+    }
+
+    return fightObj;
+
+}
+
+/**
+ * Transforms the given fightObj into a stat table.
+ * @param {*} fightObj 
+ * @param {*} sortStr 
+ */
+async function getFriendlyTable(fightObj, sortStr) {
+
+    //Create stat table header row
+    let headers = ['Account', 'Character', 'Damage', 'Cleanses', 'Strips', 'Stab', 'Alac', 'Dodges', 'Distance', 'Downs', 'Deaths'];
+    
+    let playerStats = [];
+    //Loop through each player
+    for(let i = 0; i < fightObj.playerList.length; i++){
+        let player = fightObj.playerList[i];
+        let stats = [player.account, player.character,
+            player.damage, player.cleanses, player.strips,
+            player.stabUptime.toFixed(2), player.alacUptime.toFixed(2),
+            player.dodges, Math.round(player.distance),
+            player.downs, player.deaths];
+        
+        playerStats.push(stats);
+    }
+
+    let sortIndex = 2; //default to damage sorting
+    if(!(sortStr === undefined)) {
+        //Determine which column we're sorting by
+        for(let i = 0; i < headers.length; i++){
+            if(headers[i].toUpperCase().includes(sortStr.toUpperCase())){
+                sortIndex = i;
+                break;
+            }
+        }
+    }
+
+    //Sort table by chosen column
+    playerStats.sort( function(player1, player2){
+        //Separate sorting between numbers and strings
+        if(isNaN(player1[sortIndex])){
+            return player1[sortIndex].toUpperCase().localeCompare(player2[sortIndex].toUpperCase());
+        }
+        return  player2[sortIndex] - player1[sortIndex];
+    })
+
+    //Create array
+    let tableArray = [headers];
+    for( i = 0; i < playerStats.length; i++){
+        tableArray.push(playerStats[i]);
+    }
+
+    //Create ascii table
+    let statTable = table(
+        tableArray,
+        {align : [ 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l', 'l', 'l' ]}
+    );
+
+    return statTable;
+}
+
+async function getEnemyTable(fightObj) {
+
+    //Create table headers
+    let headers = ['Name', 'Total Damage', 'Power Damage', 'Power DPS', 'Condi Damage', 'Condi DPS'];
+
+    //Create data row
+    let enemy = fightObj.enemyData;
+    let enemyStats = ['Enemy Players', enemy.totalDamage, enemy.powerDamage, enemy.powerDps, enemy.condiDamage, enemy.condiDps];
+    
+    let tableArray = [headers, enemyStats]
+    //Create ascii table
+    let statTable = table(
+        tableArray,
+        {align : [ 'l', 'l' , 'l' , 'l' , 'l' , 'l' ]}
+    );
+
+    return statTable;
 }
 
 /**
@@ -134,7 +250,7 @@ function getStatTable(sortStr, cb) {
         }
     }
 
-    //Sort by highest damage, up for debate
+    //Sort table by chosen column
     players.sort( function(player1, player2){
         //Separate sorting between numbers and strings
         if(isNaN(player1[sortIndex])){
@@ -165,10 +281,7 @@ function getStatTable(sortStr, cb) {
 /**
  * Returns an array of stat tables no larger than 1800 characters each
  */
-function getSizedStatTables(sortStr, cb){
-
-    //Get the ASCII formatted stat table
-    let statTable = getStatTable(sortStr, cb);
+function getSizedStatTables(statTable){
 
     //Split it by newlines
     let tableArray = statTable.split('\n');
@@ -196,6 +309,8 @@ function getSizedStatTables(sortStr, cb){
     return messageArray;
 }
 
+
+//unused
 async function screenshotStatTable(fp) {
     //Open HTML file in headless chrome browser
     const browser = await puppeteer.launch();
@@ -209,6 +324,7 @@ async function screenshotStatTable(fp) {
     await page.screenshot({path: 'out/stat-table.png'});
 }
 
+//unused
 async function createStatScreenshot(){
     //Create ascii formatted table
     let statTable = await getStatTable();
@@ -221,6 +337,7 @@ async function createStatScreenshot(){
 module.exports = {
     addFightToLeaderboard : addFightToLeaderboard,
     getStatTable : getStatTable,
-    createStatScreenshot : createStatScreenshot,
     getSizedStatTables : getSizedStatTables,
+    getFriendlyTable : getFriendlyTable,
+    getEnemyTable : getEnemyTable
 }

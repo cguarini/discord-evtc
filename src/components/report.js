@@ -4,7 +4,32 @@ const config = JSON.parse(fs.readFileSync('./res/config.json', 'utf8'));
 const util = require('util');
 const exec = util.promisify( require( 'child_process' ).exec);
 const statTable = require('./stat-table');
-const path = require('path')
+const path = require('path');
+const { getEnemyTable } = require('./stat-table');
+
+async function runAsciiReport(filename, postFightStatsHeader, postSquadStats, postEnemyStats, postHtml) {
+    //Parse the evtc file into HTML and JSON
+    await parseEvtc(filename);
+    let htmlFilename = filename.split('.')[0] + '_wvw_kill.html';
+  
+    //Run the JSON leaderboard parsing asynchronously
+    let jsonFilename = ('./input/' + filename.split('.')[0] + '_wvw_kill.json');
+    //Parse JSON to leaderboard and post fight stats
+    statTable.addFightToLeaderboard(jsonFilename).then( async (fightObj) => {
+
+      //Post header message
+      await postFightStatsHeader(fightObj);
+
+      //Post friendly and enemy stats
+      await postSquadStats(statTable.getSizedStatTables(await statTable.getFriendlyTable(fightObj)));
+      await postEnemyStats(statTable.getSizedStatTables(await statTable.getEnemyTable(fightObj)));
+
+    }).then( () => {
+      //Post html report
+      postHtml(htmlFilename)
+    });
+  
+}
 
 async function runReport(filename, cb) {
 
@@ -64,4 +89,5 @@ module.exports = {
   runReport : runReport,
   parseEvtc : parseEvtc,
   screenshotReport : screenshotReport,
+  runAsciiReport : runAsciiReport,
 }
