@@ -77,7 +77,7 @@ async function postHtml(htmlFilename) {
 
 async function postFightStatsHeader(fightObj) {
   client.channels.fetch(config.DISCORD_CHANNEL_ID).then( channel => {
-    let header = `Reports for fight on ${fightObj.map} lasting ${fightObj.duration}`
+    let header = `__**Reports for fight on ${fightObj.map} lasting ${fightObj.duration}**__`
     channel.send(header);
   });
 }
