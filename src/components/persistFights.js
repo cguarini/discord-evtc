@@ -8,20 +8,13 @@ let currentRaidId = null;
  */
 async function createNewRaid() {
 
-    //Current date time, which is when the raid started
-    let raidDate = new Date();
-
     let pool = await sql.connect(config.db);
-    await pool.request()
-        .input('in_raidDate', sql.DateTime2, raidDate )
+    let results = await pool.request()
+        .input('in_raidDate', sql.DateTime2, new Date() )
         .query('INSERT INTO Raid (RaidDate)\
-                VALUES (@in_raidDate)');
-
-    let result = await pool.request()
-        .input('in_raidDate', sql.DateTime2, raidDate)
-        .query('SELECT RaidId FROM RAID\
-                WHERE RaidDate = @in_raidDate');
-    return result.recordset[0].RaidId;
+                VALUES (@in_raidDate);\
+                SELECT SCOPE_IDENTITY() AS RaidId;');
+    return results.recordset[0].RaidId;
 }
 
 /**
@@ -36,7 +29,22 @@ async function getRaidId() {
 }
 
 async function createFight(fightObj) {
-    
+
+    //Set fightdate to current date, will need for finding fightId later
+    let raidId = await getRaidId();
+
+    let pool = await sql.connect(config.db);
+    let results = await pool.request()
+        .input('in_raidId', sql.Int, raidId)
+        .input('in_map', sql.VarChar, fightObj.map)
+        .input('in_commander', sql.VarChar, fightObj.commander)
+        .input('in_duration', sql.VarChar, fightObj.duration)
+        .input('in_link', sql.VarChar, fightObj.link)
+        .input('in_fightDate', sql.DateTime2, new Date())
+        .query('INSERT INTO Fight (RaidId, Map, Commander, Duration, Link, FightDate)\
+                VALUES (@in_raidId, @in_map, @in_commander, @in_duration, @in_link, @in_fightDate);\
+                SELECT SCOPE_IDENTITY() as FightId;');
+    return results.recordset[0].FightId;
 }
 
 async function saveFightToDb(fightObj) {
