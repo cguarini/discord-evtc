@@ -2,6 +2,7 @@ let fs = require('fs');
 let table = require('text-table');
 const config = JSON.parse(fs.readFileSync('./res/config.json', 'utf8'));
 const puppeteer = require('puppeteer');
+const { saveFightToDb } = require('./persistFights');
 
 
 //Hashmap that will hold player states
@@ -93,6 +94,8 @@ async function addFightToLeaderboard(fp) {
 
         //Create fight specific stats
         fightStatObj.account = accountId;
+        fightStatObj.group = player.group;
+        fightStatObj.commander = player.hasCommanderTag;
         fightStatObj.character = player.name;
         fightStatObj.totalActiveTime = activeTime;
         fightStatObj.fightsParticipated = 1;
@@ -140,6 +143,7 @@ async function addFightToLeaderboard(fp) {
         condiDps : enemyDpsStats.condiDps
     }
 
+    saveFightToDb(fightObj);
     return fightObj;
 
 }
