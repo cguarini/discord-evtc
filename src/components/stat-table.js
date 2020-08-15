@@ -45,6 +45,7 @@ async function addFightToLeaderboard(fp) {
                 distance : 0,
                 downs : 0,
                 deaths : 0,
+                fightTime : 0,
             };
             //Add initial object to map
             playerStats[accountId] = statObj;
@@ -85,6 +86,11 @@ async function addFightToLeaderboard(fp) {
 
         let activeTime = player.activeTimes[0];
 
+        let deathTime = activeTime
+        if(player.deathRecap != undefined){
+            deathTime = player.deathRecap[0].deathTime;
+        }
+
         //Create fight specific stats
         fightStatObj.account = accountId;
         fightStatObj.character = player.name;
@@ -99,6 +105,7 @@ async function addFightToLeaderboard(fp) {
         fightStatObj.distance = generalStats.distToCom;
         fightStatObj.downs = defensiveStats.downCount;
         fightStatObj.deaths = defensiveStats.deadCount;
+        fightStatObj.fightTime = deathTime;
 
         //Save fight specific stats
         fightObj.playerList.push(fightStatObj)
@@ -116,6 +123,7 @@ async function addFightToLeaderboard(fp) {
         statObj.distance += (generalStats.distToCom * activeTime); // to average across all fights
         statObj.downs += defensiveStats.downCount;
         statObj.deaths += defensiveStats.deadCount;
+        statObj.fightTime += deathTime;
 
         //Save statistics back to the map
         playerStats[accountId] = statObj;
@@ -144,17 +152,18 @@ async function addFightToLeaderboard(fp) {
 async function getFriendlyTable(fightObj, sortStr) {
 
     //Create stat table header row
-    let headers = ['Account', 'Character', 'Damage', 'Cleanses', 'Strips', 'Stab', 'Alac', 'Dodges', 'Distance', 'Downs', 'Deaths'];
+    let headers = ['Character', 'DPS', 'Damage', 'Cleanses', 'Strips', 'Stab', 'Dodges', 'Distance', 'Downs', 'Deaths', 'Time'];
     
     let playerStats = [];
     //Loop through each player
     for(let i = 0; i < fightObj.playerList.length; i++){
         let player = fightObj.playerList[i];
-        let stats = [player.account, player.character,
+        let stats = [ player.character, 
+            Math.round(player.damage / (player.totalActiveTime / 1000)),
             player.damage, player.cleanses, player.strips,
-            player.stabUptime.toFixed(2), player.alacUptime.toFixed(2),
+            player.stabUptime.toFixed(2),
             player.dodges, Math.round(player.distance),
-            player.downs, player.deaths];
+            player.downs, player.deaths, `${Math.floor((player.fightTime / 1000) / 60)}m ${Math.round((player.fightTime / 1000)) % 60}s`];
         
         playerStats.push(stats);
     }
@@ -188,7 +197,7 @@ async function getFriendlyTable(fightObj, sortStr) {
     //Create ascii table
     let statTable = table(
         tableArray,
-        {align : [ 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l', 'l', 'l' ]}
+        {align : [ 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l', 'l' ]}
     );
 
     return statTable;
@@ -220,28 +229,34 @@ async function getEnemyTable(fightObj) {
 function getStatTable(sortStr, cb) {
 
     //Create stat table header row
-    let headers = ['Account', 'Characters', 'Fights', 'Damage', 'Cleanses', 'Strips', 'Stab', 'Alac', 'Dodges', 'Distance', 'Downs', 'Deaths'];
+    let headers = ['Account', 'Characters', 'Fights', 'DPS', 'Damage', 'Cleanses', 'Strips', 'Stab', 'Dodges', 'Dist', 'Downs', 'Deaths', 'Time'];
 
     //Add player statistics to stat table
     let players = [];
     for(accountId in playerStats){
         let statObj = playerStats[accountId];
         let charactersStr = '';
-        for( i = 0; i < statObj.characters.length; i++){
-            if(i > 0){
+        //Report last two characters
+        for( i = statObj.characters.length - 1; ((i > statObj.characters.length - 3) && i >= 0); i--){
+            if(i < statObj.characters.length - 1){
                 charactersStr += ' , ';
             }
             charactersStr += statObj.characters[i];
         }
-        let stats = [accountId, charactersStr, statObj.fightsParticipated,
+
+        if(charactersStr.length > 25) {
+            charactersStr = charactersStr.slice(0,25) + '...';
+        }
+        let stats =  [accountId, charactersStr, statObj.fightsParticipated,
+             Math.round(statObj.damage /(statObj.totalActiveTime / 1000)),
              statObj.damage, statObj.cleanses, statObj.strips,
-             (statObj.stabUptime / statObj.totalActiveTime).toFixed(2), (statObj.alacUptime / statObj.totalActiveTime).toFixed(2),
+             (statObj.stabUptime / statObj.totalActiveTime).toFixed(2),
              statObj.dodges, Math.round((statObj.distance / statObj.totalActiveTime)),
-             statObj.downs, statObj.deaths];
+             statObj.downs, statObj.deaths, `${Math.floor((statObj.fightTime / 1000) / 60)}m ${Math.round((statObj.fightTime / 1000)) % 60}s`];
         players.push(stats);
     }
 
-    let sortIndex = 3;//Default to damage
+    let sortIndex = 3;//Default to dps
     //Determine which column we're sorting by
     for(let i = 0; i < headers.length; i++){
         if(headers[i].toUpperCase().includes(sortStr.toUpperCase())){
@@ -268,7 +283,7 @@ function getStatTable(sortStr, cb) {
     //Create ascii table
     let statTable = table(
         tableArray,
-        {align : [ 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l', 'l', 'l' ]}
+        {align : [ 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l' , 'l', 'l', 'l', 'l' ]}
     );
 
     //Write backup to file
