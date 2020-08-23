@@ -1,9 +1,14 @@
 let fs = require('fs');
 let table = require('text-table');
+const { saveFightToDb } = require('./persistFights');
 const config = JSON.parse(fs.readFileSync('./res/config.json', 'utf8'));
 
 //Hashmap that will hold player states
 let playerStats = new Map();
+
+async function getPlayerStats(){
+    return playerStats;
+}
 
 /**
  * Adds the stats from the fight to the leaderboard.
@@ -100,6 +105,7 @@ async function addFightToLeaderboard(fp) {
         fightStatObj.account = accountId;
         fightStatObj.group = player.group;
         fightStatObj.character = player.name;
+        fightStatObj.profession = player.profession;
         fightStatObj.totalActiveTime = activeTime;
         fightStatObj.fightsParticipated = 1;
         fightStatObj.damage = offensiveStats.damage;
@@ -146,6 +152,108 @@ async function addFightToLeaderboard(fp) {
         condiDps : enemyDpsStats.condiDps
     }
 
+    saveFightToDb(fightObj);
     return fightObj;
 
+}
+
+async function breakPlayersIntoGroups(playerStats) {
+
+    //Sort players by group order
+    playerStats.sort((player1, player2) => {
+        return player2.group - player1.group;
+    });
+
+    let groups = []
+    let currentGroup = 0;
+    //Loop through each player, adding them to their respective group array
+    for(let i = 0; i < playerStats.length; i++){
+
+        let player = playerStats[i];
+
+        if(player.group > currentGroup) {
+            currentGroup = player.group;
+        }
+    }
+}
+
+/**
+ * Return the top 5 (or less depending on squad size) cleansers as an ASCII table
+ * @param {*} fightObj 
+ */
+async function getCleanseTable(fightObj) {
+
+    //retrieve list of friendly players for this fight
+    let playerList = fightObj.playerList;
+
+    //sort players by cleanses descending
+    playerList.sort( (player1, player2) => {
+        return player2.cleanses - player1.cleanses;
+    });
+
+    //Create table of top 5 cleansers
+    let header = ['Name', 'Profession', 'Cleanses'];
+    let cleanseTable = [header];
+    for(let i = 0; i < 5 && i < playerList.length; i++){
+        let player = playerList[i];
+        cleanseTable.push([player.character, player.profession, player.cleanses]);
+    }
+
+    let asciiTable = table(
+        cleanseTable,
+        {align : [ 'l' , 'l' , 'l' ]}
+    );
+
+    return asciiTable;
+
+}
+
+async function getSquadTable(fightObj) {
+
+    //Object containing all relevant information from player obj
+    let squadStats = {
+        playerCount : 0,
+        activeTime : 0,
+        damage : 0,
+        cleanses : 0,
+        strips : 0,
+        downs : 0,
+        deaths : 0
+    };
+    let playerList = fightObj.playerList;
+
+    //Loop through players, tallying stats
+    for(let i = 0; i < playerList.length; i++) {
+        let player = playerList[i];
+        squadStats.playerCount += 1;
+        if(player.fightTime > squadStats.activeTime){
+            squadStats.activeTime = player.fightTime;
+        }
+        squadStats.damage += player.damage;
+        squadStats.cleanses += player.cleanses;
+        squadStats.strips += player.strips;
+        squadStats.downs += player.downs;
+        squadStats.deaths += player.deaths;
+    }
+
+    //Create array of table rows, include the header
+    let tableArray = [['Gamers', 'Damage', 'DPS', 'Cleanses', 'Strips', 'Downs', 'Deaths']];
+    //Add stats
+    tableArray.push([squadStats.playerCount, squadStats.damage, 
+        Math.round(squadStats.damage / (squadStats.activeTime / 1000)), squadStats.cleanses, 
+        squadStats.strips, squadStats.downs, squadStats.deaths]);
+    
+    let asciiTable = table(
+        tableArray,
+        {align : [ 'l' , 'l' , 'l', 'l', 'l', 'l', 'l', 'l' ]}
+    );
+
+    return asciiTable;
+}
+
+module.exports = {
+    addFightToLeaderboard : addFightToLeaderboard,
+    getPlayerStats : getPlayerStats,
+    getCleanseTable : getCleanseTable,
+    getSquadTable : getSquadTable
 }

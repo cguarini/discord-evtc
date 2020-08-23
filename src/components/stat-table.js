@@ -3,6 +3,7 @@ let table = require('text-table');
 const config = JSON.parse(fs.readFileSync('./res/config.json', 'utf8'));
 const puppeteer = require('puppeteer');
 const { saveFightToDb } = require('./persistFights');
+const {getPlayerStats} = require('./fight-report');
 
 
 //Hashmap that will hold player states
@@ -210,11 +211,11 @@ async function getFriendlyTable(fightObj, sortStr) {
 async function getEnemyTable(fightObj) {
 
     //Create table headers
-    let headers = ['Name', 'Total Damage', 'Power Damage', 'Power DPS', 'Condi Damage', 'Condi DPS'];
+    let headers = ['Total Dmg', 'Power Dmg', 'Power DPS', 'Condi Dmg', 'Condi DPS'];
 
     //Create data row
     let enemy = fightObj.enemyData;
-    let enemyStats = ['Enemy Players', enemy.totalDamage, enemy.powerDamage, enemy.powerDps, enemy.condiDamage, enemy.condiDps];
+    let enemyStats = [enemy.totalDamage, enemy.powerDamage, enemy.powerDps, enemy.condiDamage, enemy.condiDps];
     
     let tableArray = [headers, enemyStats]
     //Create ascii table
@@ -230,13 +231,14 @@ async function getEnemyTable(fightObj) {
  * Returns the stat map object as an ascii table
  * Returns array of tables, as discord is limited to 2000 characters per mesage
  */
-function getStatTable(sortStr, cb) {
+async function getStatTable(sortStr, cb) {
 
     //Create stat table header row
     let headers = ['Account', 'Characters', 'Fights', 'DPS', 'Damage', 'Cleanses', 'Strips', 'Stab', 'Dodges', 'Dist', 'Downs', 'Deaths', 'Time'];
 
     //Add player statistics to stat table
     let players = [];
+    let playerStats = await getPlayerStats();
     for(accountId in playerStats){
         let statObj = playerStats[accountId];
         let charactersStr = '';
@@ -317,10 +319,10 @@ function getSizedStatTables(statTable){
 
     //Add rows to messages
     let messageArray = [];
-    for(let i = 1; i < tableArray.length; i++){
+    for(let i = 0; i < tableArray.length; i++){
         //Create a new message if previous one is full
         if(messageArray.length < Math.floor(i / rowsPerMessage) + 1){
-            messageArray.push(header + '\n');
+            messageArray.push('');
         }
         //Add row to message
         messageArray[Math.floor(i / rowsPerMessage)] += (tableArray[i] + '\n');
@@ -329,29 +331,6 @@ function getSizedStatTables(statTable){
 }
 
 
-//unused
-async function screenshotStatTable(fp) {
-    //Open HTML file in headless chrome browser
-    const browser = await puppeteer.launch();
-    const page = await browser.newPage();
-    await page.goto('file:///' +  fp, {waitUntil: 'networkidle2'});
-    await page.setViewport({
-        width : 1200,
-        height : 600,
-        deviceScaleFactor : 1
-    });
-    await page.screenshot({path: 'out/stat-table.png'});
-}
-
-//unused
-async function createStatScreenshot(){
-    //Create ascii formatted table
-    let statTable = await getStatTable();
-    //Save to file
-    //fs.writeFileSync('./out/leaderboard.txt', statTable);
-    //Screenshot file in chromium
-    await screenshotStatTable(config.OUTPUT_DIR + 'leaderboard.txt');
-}
 
 module.exports = {
     addFightToLeaderboard : addFightToLeaderboard,

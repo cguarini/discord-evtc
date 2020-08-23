@@ -66,6 +66,7 @@ async function createPlayer(FightId, fightStatObj) {
         .input('in_accountName', sql.VarChar, fightStatObj.account)
         .input('in_fightId', sql.Int, FightId)
         .input('in_characterName', sql.VarChar, fightStatObj.character)
+        .input('in_profession', sql.VarChar, fightStatObj.profession)
         .input('in_squadGroup', sql.Int, fightStatObj.group)
         .input('in_activeTime', sql.Int, fightStatObj.totalActiveTime)
         .input('in_damage', sql.Int, fightStatObj.damage)
@@ -78,9 +79,9 @@ async function createPlayer(FightId, fightStatObj) {
         .input('in_deaths', sql.Int, fightStatObj.deaths)
         .input('in_fightTime', sql.Int, fightStatObj.fightTime)
         .query('INSERT INTO PlayerStats\
-                (AccountName, FightId, CharacterName, SquadGroup, ActiveTime, Damage,\
+                (AccountName, FightId, CharacterName, Profession, SquadGroup, ActiveTime, Damage,\
                     Cleanses, Strips, Stability, Dodges, Distance, Downs, Deaths, FightTime)\
-                VALUES (@in_accountName, @in_fightId, @in_characterName, @in_squadGroup, @in_activeTime,\
+                VALUES (@in_accountName, @in_fightId, @in_characterName, @in_profession, @in_squadGroup, @in_activeTime,\
                     @in_damage, @in_cleanses, @in_strips, @in_stability, @in_dodges, @in_distance,\
                     @in_downs, @in_deaths, @in_fightTime);');
 }
