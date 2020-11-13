@@ -56,6 +56,7 @@ async function addFightToLeaderboard(fp) {
                 downs : 0,
                 deaths : 0,
                 fightTime : 0,
+                killed : 0,
             };
             //Add initial object to map
             playerStats[accountId] = statObj;
@@ -118,6 +119,7 @@ async function addFightToLeaderboard(fp) {
         fightStatObj.downs = defensiveStats.downCount;
         fightStatObj.deaths = defensiveStats.deadCount;
         fightStatObj.fightTime = deathTime;
+        fightStatObj.killed = generalStats.killed;
 
         //Save fight specific stats
         fightObj.playerList.push(fightStatObj)
@@ -136,6 +138,7 @@ async function addFightToLeaderboard(fp) {
         statObj.downs += defensiveStats.downCount;
         statObj.deaths += defensiveStats.deadCount;
         statObj.fightTime += deathTime;
+        statObj.killed += generalStats.killed;
 
         //Save statistics back to the map
         playerStats[accountId] = statObj;
@@ -143,13 +146,16 @@ async function addFightToLeaderboard(fp) {
 
     //Save enemy fight data
     let enemyStats = fightStats.targets[0];
-    let enemyDpsStats = enemyStats.dpsAll[0]
+    let enemyDpsStats = enemyStats.dpsAll[0];
+    let enemyGeneralStats = enemyStats.statsAll[0];
     fightObj.enemyData = {
         totalDamage : enemyDpsStats.damage,
         powerDamage : enemyDpsStats.powerDamage,
         powerDps : enemyDpsStats.powerDps,
         condiDamage : enemyDpsStats.condiDamage,
-        condiDps : enemyDpsStats.condiDps
+        condiDps : enemyDpsStats.condiDps,
+        killed : enemyGeneralStats.killed,
+        downed : enemyGeneralStats.downed,
     }
 
     saveFightToDb(fightObj);
@@ -178,35 +184,102 @@ async function breakPlayersIntoGroups(playerStats) {
 }
 
 /**
- * Return the top 5 (or less depending on squad size) cleansers as an ASCII table
+ * Return the top n (or less depending on squad size) players 
+ * sorted by stat desc as an ASCII table
  * @param {*} fightObj 
  */
-async function getCleanseTable(fightObj) {
+async function getStatTable(fightObj, stat, title, n) {
 
     //retrieve list of friendly players for this fight
     let playerList = fightObj.playerList;
 
-    //sort players by cleanses descending
+    //sort players by stat descending
     playerList.sort( (player1, player2) => {
-        return player2.cleanses - player1.cleanses;
+        return player2[stat] - player1[stat];
     });
 
-    //Create table of top 5 cleansers
-    let header = ['Name', 'Profession', 'Cleanses'];
-    let cleanseTable = [header];
-    for(let i = 0; i < 5 && i < playerList.length; i++){
+    //Create table of top 5 players by stat desc
+    let header = ['Name', 'Profession', title];
+    let stripTable = [header];
+    for(let i = 0; i < n && i < playerList.length; i++){
         let player = playerList[i];
-        cleanseTable.push([player.character, player.profession, player.cleanses]);
+        stripTable.push([player.character, player.profession, player[stat]]);
     }
 
     let asciiTable = table(
-        cleanseTable,
+        stripTable,
         {align : [ 'l' , 'l' , 'l' ]}
     );
 
     return asciiTable;
 
 }
+
+/**
+ * Return the top n (or less depending on squad size) players 
+ * sorted by stat desc as an ASCII table
+ * @param {*} fightObj 
+ */
+async function getDamageTable(fightObj, n) {
+
+    //retrieve list of friendly players for this fight
+    let playerList = fightObj.playerList;
+
+    //sort players by stat descending
+    playerList.sort( (player1, player2) => {
+        return player2['damage'] - player1['damage'];
+    });
+
+    //Create table of top 5 players by stat desc
+    let header = ['Name', 'Profession', 'Damage', 'Dps'];
+    let stripTable = [header];
+    for(let i = 0; i < n && i < playerList.length; i++){
+        let player = playerList[i];
+        stripTable.push([player.character, player.profession, player['damage'], 
+            Math.round(player.damage /(player.totalActiveTime / 1000))]);
+    }
+
+    let asciiTable = table(
+        stripTable,
+        {align : [ 'l' , 'l' , 'l' ]}
+    );
+
+    return asciiTable;
+
+}
+
+async function getKDTable(fightObj) {
+    //Create table headers
+    let headers = ['', 'Kills', 'Deaths', 'K/D'];
+
+    //Create data row
+    //Get enemy info
+    let enemy = fightObj.enemyData;
+    //Get squad info
+    let playerList = fightObj.playerList;
+    let kills = 0;
+    let deaths = 0;
+    for(let i in playerList) {
+        let player = playerList[i];
+        kills += player.killed;
+        deaths += player.deaths;
+    }
+
+    let squadStats = ['Squad', kills, deaths, (kills / deaths).toFixed(2)];
+
+    let enemyStats = ['Enemies', enemy.killed, kills + '*', (enemy.killed / kills).toFixed(2) + '*'];
+
+    
+    let tableArray = [headers, squadStats, enemyStats]
+    //Create ascii table
+    let statTable = table(
+        tableArray,
+        {align : [ 'l', 'l' , 'l' , 'l' , 'l' , 'l', 'l' ]}
+    );
+
+    return statTable;
+}
+
 
 async function getSquadTable(fightObj) {
 
@@ -218,6 +291,7 @@ async function getSquadTable(fightObj) {
         cleanses : 0,
         strips : 0,
         downs : 0,
+        killed : 0,
         deaths : 0
     };
     let playerList = fightObj.playerList;
@@ -233,11 +307,12 @@ async function getSquadTable(fightObj) {
         squadStats.cleanses += player.cleanses;
         squadStats.strips += player.strips;
         squadStats.downs += player.downs;
+        squadStats.killed += player.killed;
         squadStats.deaths += player.deaths;
     }
 
     //Create array of table rows, include the header
-    let tableArray = [['Gamers', 'Damage', 'DPS', 'Cleanses', 'Strips', 'Downs', 'Deaths']];
+    let tableArray = [['Gamers™', 'Damage', 'DPS', 'Cleanses', 'Strips', 'Downs', 'Deaths']];
     //Add stats
     tableArray.push([squadStats.playerCount, squadStats.damage, 
         Math.round(squadStats.damage / (squadStats.activeTime / 1000)), squadStats.cleanses, 
@@ -254,6 +329,8 @@ async function getSquadTable(fightObj) {
 module.exports = {
     addFightToLeaderboard : addFightToLeaderboard,
     getPlayerStats : getPlayerStats,
-    getCleanseTable : getCleanseTable,
-    getSquadTable : getSquadTable
+    getSquadTable : getSquadTable,
+    getKDTable,
+    getStatTable,
+    getDamageTable
 }
