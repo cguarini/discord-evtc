@@ -6,7 +6,7 @@ const exec = util.promisify( require( 'child_process' ).exec);
 const statTable = require('./stat-table');
 const path = require('path');
 const Discord = require('discord.js');
-const { addFightToLeaderboard, getSquadTable, getCleanseTable } = require('./fight-report');
+const { addFightToLeaderboard, getSquadTable, getKDTable, getStatTable, getDamageTable } = require('./fight-report');
 
 
 async function runAsciiReport(filename, client) {
@@ -20,7 +20,8 @@ async function runAsciiReport(filename, client) {
     addFightToLeaderboard(jsonFilename).then( async (fightObj) => {
 
       //Get fight-reports channel as outlined in config
-      let channel = await client.channels.fetch(config.DISCORD_CHANNEL_ID);
+      let reportChannel = await client.channels.fetch(config.DISCORD_CHANNEL_ID);
+      let tableChannel = await client.channels.fetch(config.TABLE_CHANNEL_ID);
 
       let squadStats = statTable.getSizedStatTables(await statTable.getFriendlyTable(fightObj));
 
@@ -42,18 +43,31 @@ async function runAsciiReport(filename, client) {
             inline: true 
           },
           {
+            name : 'Top Damage',
+            value: `\`\`\`${statTable.getSizedStatTables(await getDamageTable(fightObj, 5))}\`\`\``,
+          },
+          {
             name : 'Top Cleansers',
-            value: `\`\`\`${statTable.getSizedStatTables(await getCleanseTable(fightObj))}\`\`\``,
+            value: `\`\`\`${statTable.getSizedStatTables(await getStatTable(fightObj, 'cleanses', 'Cleanses', 5))}\`\`\``,
+          },
+          {
+            name : 'Top Strips',
+            value: `\`\`\`${statTable.getSizedStatTables(await getStatTable(fightObj, 'strips', 'Strips', 3))}\`\`\``,
+          },
+          {
+            name : 'Kills/Deaths',
+            value: `\`\`\`${statTable.getSizedStatTables(await getKDTable(fightObj))}\`\`\`
+                    > Minimum enemy deaths, estimated by squad kills`,
           },
         )
         .setTimestamp()
         .setFooter(`Commander ${fightObj.commander}`);
 
-      channel.send(reportHeaderEmbed);
+      reportChannel.send(reportHeaderEmbed);
 
       //Send Stat Tables
       for(let i = 0; i < squadStats.length; i++){
-        channel.send(`\`\`\`${squadStats[i]}\`\`\``);
+        tableChannel.send(`\`\`\`${squadStats[i]}\`\`\``);
       }
 
 

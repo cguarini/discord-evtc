@@ -221,7 +221,7 @@ async function getEnemyTable(fightObj) {
     //Create ascii table
     let statTable = table(
         tableArray,
-        {align : [ 'l', 'l' , 'l' , 'l' , 'l' , 'l' ]}
+        {align : [ 'l', 'l' , 'l' , 'l' , 'l' , 'l']}
     );
 
     return statTable;
@@ -337,5 +337,5 @@ module.exports = {
     getStatTable : getStatTable,
     getSizedStatTables : getSizedStatTables,
     getFriendlyTable : getFriendlyTable,
-    getEnemyTable : getEnemyTable
+    getEnemyTable : getEnemyTable,
 }
