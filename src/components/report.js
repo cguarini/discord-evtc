@@ -57,7 +57,7 @@ async function runAsciiReport(filename, client) {
           {
             name : 'Kills/Deaths',
             value: `\`\`\`${statTable.getSizedStatTables(await getKDTable(fightObj))}\`\`\`
-                    > Minimum enemy deaths, estimated by squad kills`,
+                    > * Minimum enemy deaths, estimated by squad kills`,
           },
         )
         .setTimestamp()

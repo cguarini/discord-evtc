@@ -44,6 +44,22 @@ client.on('message', async (message) => {
 
   }
 
+  if (params[0] === '!killStats') {
+    let reportHeaderEmbed = new Discord.MessageEmbed()
+        .setColor('#FB512D')
+        .setTitle('Kill Stats')
+        .addFields(
+          {
+            name : 'K/D Table',
+            value: `\`\`\`${statTable.getSizedStatTables(await statTable.getKillStats())}\`\`\``,
+          }
+        )
+        .setTimestamp()
+
+        message.channel.send(reportHeaderEmbed);
+
+  }
+
 });
 
 async function postEmbed(embed) {

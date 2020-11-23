@@ -51,6 +51,7 @@ async function addFightToLeaderboard(fp) {
                 strips : 0,
                 stabUptime : 0,
                 alacUptime : 0,
+                protUptime : 0,
                 dodges : 0,
                 distance : 0,
                 downs : 0,
@@ -85,15 +86,24 @@ async function addFightToLeaderboard(fp) {
             if(buff.id === 1122){
                 return true;
             }
-        })
+        });
         let stabUptime = (stability === undefined ? 0 : stability.buffData[0].uptime);
         //alacrity
         let alacrity = buffUptimeArray.find( (buff) => {
             if(buff.id === 30328){
                 return true;
             }
-        })
+        });
         let alacUptime = (alacrity === undefined ? 0 : alacrity.buffData[0].uptime);
+
+        //Protection
+        let protection = buffUptimeArray.find( (buff) => {
+            if(buff.id === 717) {
+                return true;
+            }
+        });
+        let protUptime = (protection === undefined ? 0 : protection.buffData[0].uptime);
+
 
         let activeTime = player.activeTimes[0];
 
@@ -114,6 +124,7 @@ async function addFightToLeaderboard(fp) {
         fightStatObj.strips = supportStats.boonStrips;
         fightStatObj.stabUptime = stabUptime;
         fightStatObj.alacUptime = alacUptime;
+        fightStatObj.protUptime = protUptime;
         fightStatObj.dodges = defensiveStats.dodgeCount;
         fightStatObj.distance = generalStats.distToCom;
         fightStatObj.downs = defensiveStats.downCount;
@@ -133,6 +144,7 @@ async function addFightToLeaderboard(fp) {
         statObj.strips += supportStats.boonStrips;
         statObj.stabUptime += activeTime * stabUptime;
         statObj.alacUptime += activeTime * alacUptime;
+        statObj.protUptime += activeTime * protUptime;
         statObj.dodges += defensiveStats.dodgeCount;
         statObj.distance += (generalStats.distToCom * activeTime); // to average across all fights
         statObj.downs += defensiveStats.downCount;

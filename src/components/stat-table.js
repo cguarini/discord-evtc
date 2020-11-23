@@ -157,7 +157,7 @@ async function addFightToLeaderboard(fp) {
 async function getFriendlyTable(fightObj, sortStr) {
 
     //Create stat table header row
-    let headers = ['Character', 'DPS', 'Damage', 'Cleanses', 'Strips', 'Stab', 'Dodges', 'Distance', 'Downs', 'Deaths', 'Time'];
+    let headers = ['Character', 'DPS', 'Damage', 'Cleanses', 'Strips', 'Stab', 'Prot', 'Dodges', 'Distance', 'Downs', 'Deaths', 'Time'];
     
     let playerStats = [];
     //Loop through each player
@@ -166,7 +166,7 @@ async function getFriendlyTable(fightObj, sortStr) {
         let stats = [ player.character, 
             Math.round(player.damage / (player.totalActiveTime / 1000)),
             player.damage, player.cleanses, player.strips,
-            player.stabUptime.toFixed(2),
+            player.stabUptime.toFixed(2), player.protUptime.toFixed(2),
             player.dodges, Math.round(player.distance),
             player.downs, player.deaths, `${Math.floor((player.fightTime / 1000) / 60)}m ${Math.round((player.fightTime / 1000)) % 60}s`];
         
@@ -227,6 +227,36 @@ async function getEnemyTable(fightObj) {
     return statTable;
 }
 
+async function getKillStats() {
+
+    //Create table headers
+    let headers = ['Kills', 'Deaths', 'K/D'];
+
+    //Create data row
+    //Get squad info
+    let playerList = await getPlayerStats();
+    let kills = 0;
+    let deaths = 0;
+    for(let i in playerList) {
+        let player = playerList[i];
+        kills += player.killed;
+        deaths += player.deaths;
+    }
+
+    let squadStats = [kills, deaths, (kills / deaths).toFixed(2)];
+
+
+    
+    let tableArray = [headers, squadStats]
+    //Create ascii table
+    let statTable = table(
+        tableArray,
+        {align : [ 'l', 'l' , 'l' ]}
+    );
+
+    return statTable;
+}
+
 /**
  * Returns the stat map object as an ascii table
  * Returns array of tables, as discord is limited to 2000 characters per mesage
@@ -234,7 +264,7 @@ async function getEnemyTable(fightObj) {
 async function getStatTable(sortStr, cb) {
 
     //Create stat table header row
-    let headers = ['Account', 'Characters', 'Fights', 'DPS', 'Damage', 'Cleanses', 'Strips', 'Stab', 'Dodges', 'Dist', 'Downs', 'Deaths', 'Time'];
+    let headers = ['Account', 'Characters', 'Fights', 'DPS', 'Damage', 'Cleanses', 'Strips', 'Stab', 'Prot', 'Dodges', 'Dist', 'Downs', 'Deaths', 'Time'];
 
     //Add player statistics to stat table
     let players = [];
@@ -256,7 +286,7 @@ async function getStatTable(sortStr, cb) {
         let stats =  [accountId, charactersStr, statObj.fightsParticipated,
              Math.round(statObj.damage /(statObj.totalActiveTime / 1000)),
              statObj.damage, statObj.cleanses, statObj.strips,
-             (statObj.stabUptime / statObj.totalActiveTime).toFixed(2),
+             (statObj.stabUptime / statObj.totalActiveTime).toFixed(2), (statObj.protUptime / statObj.totalActiveTime).toFixed(2),
              statObj.dodges, Math.round((statObj.distance / statObj.totalActiveTime)),
              statObj.downs, statObj.deaths, `${Math.floor((statObj.fightTime / 1000) / 60)}m ${Math.round((statObj.fightTime / 1000)) % 60}s`];
         players.push(stats);
@@ -338,4 +368,5 @@ module.exports = {
     getSizedStatTables : getSizedStatTables,
     getFriendlyTable : getFriendlyTable,
     getEnemyTable : getEnemyTable,
+    getKillStats
 }
