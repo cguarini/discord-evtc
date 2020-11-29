@@ -78,6 +78,8 @@ async function addFightToLeaderboard(fp) {
         let defensiveStats = player.defenses[0];
         let supportStats = player.support[0];
         let generalStats = player.statsAll[0];
+        let targetStats = player.statsTargets[0][0];//One entry per target, only one target since WvW
+        console.log(targetStats)
 
         //Find buff uptime % 
         //Stability
@@ -130,7 +132,7 @@ async function addFightToLeaderboard(fp) {
         fightStatObj.downs = defensiveStats.downCount;
         fightStatObj.deaths = defensiveStats.deadCount;
         fightStatObj.fightTime = deathTime;
-        fightStatObj.killed = generalStats.killed;
+        fightStatObj.killed = targetStats.killed;
 
         //Save fight specific stats
         fightObj.playerList.push(fightStatObj)
