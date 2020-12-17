@@ -6,8 +6,13 @@ const exec = util.promisify( require( 'child_process' ).exec);
 const statTable = require('./stat-table');
 const path = require('path');
 const Discord = require('discord.js');
-const { addFightToLeaderboard, getSquadTable, getKDTable, getStatTable, getDamageTable } = require('./fight-report');
+const { addFightToLeaderboard, getSquadTable, getKDTable, getStatTable, getDamageTable, getEnemyTable } = require('./fight-report');
 
+const APP_ENV = config.env.APP_ENV;
+const env = config.env[APP_ENV];
+
+let raidStatsMessages = [];
+let killsMessages = [];
 
 async function runAsciiReport(filename, client) {
     //Parse the evtc file into HTML and JSON
@@ -15,13 +20,13 @@ async function runAsciiReport(filename, client) {
     let htmlFilename = filename.split('.')[0] + '_wvw_kill.html';
   
     //Run the JSON leaderboard parsing asynchronously
-    let jsonFilename = ('./input/' + filename.split('.')[0] + '_wvw_kill.json');
+    let jsonFilename = ('./input/' + filename.split('.')[0] + '_detailed_wvw_kill.json');
     //Parse JSON to leaderboard and post fight stats
     addFightToLeaderboard(jsonFilename).then( async (fightObj) => {
 
       //Get fight-reports channel as outlined in config
-      let reportChannel = await client.channels.fetch(config.DISCORD_CHANNEL_ID);
-      let tableChannel = await client.channels.fetch(config.TABLE_CHANNEL_ID);
+      let reportChannel = await client.channels.fetch(env.DISCORD_CHANNEL_ID);
+      let tableChannel = await client.channels.fetch(env.TABLE_CHANNEL_ID);
 
       let squadStats = statTable.getSizedStatTables(await statTable.getFriendlyTable(fightObj));
 
@@ -39,7 +44,7 @@ async function runAsciiReport(filename, client) {
           },
           { 
             name: 'Enemy Stats', 
-            value: `\`\`\`${statTable.getSizedStatTables(await statTable.getEnemyTable(fightObj))}\`\`\``,
+            value: `\`\`\`${statTable.getSizedStatTables(await getEnemyTable(fightObj))}\`\`\``,
             inline: true 
           },
           {
@@ -56,8 +61,7 @@ async function runAsciiReport(filename, client) {
           },
           {
             name : 'Kills/Deaths',
-            value: `\`\`\`${statTable.getSizedStatTables(await getKDTable(fightObj))}\`\`\`
-                    > * Minimum enemy deaths, estimated by squad kills`,
+            value: `\`\`\`${statTable.getSizedStatTables(await getKDTable(fightObj))}\`\`\``
           },
         )
         .setTimestamp()
@@ -65,16 +69,74 @@ async function runAsciiReport(filename, client) {
 
       reportChannel.send(reportHeaderEmbed);
 
-      //Send Stat Tables
+      //Send Fight Stat Tables
       for(let i = 0; i < squadStats.length; i++){
         tableChannel.send(`\`\`\`${squadStats[i]}\`\`\``);
       }
 
-
-      
+      updateRaidStatsChannel(client);
+      updateKillsChannel(client);
 
     });
+
   
+}
+
+async function updateRaidStatsChannel(client) {
+
+  let channel = await client.channels.fetch(env.RAIDSTATS_CHANNEL_ID);
+
+  //If first fight of the raid, send the header
+  if(raidStatsMessages.length === 0) {
+    let dt = new Date();
+    channel.send(`***----- ${dt.getFullYear()}-${dt.getMonth() + 1}-${dt.getDate()} ${dt.getHours()}:${dt.getMinutes()} -----***`)
+  }
+  else { //else delete messages from this raid before sending new ones.
+    for(let i = 0; i < raidStatsMessages.length; i++) {
+      raidStatsMessages[i].delete();
+    }
+  }
+
+  let statTables = statTable.getSizedStatTables(await statTable.getStatTable('Damage'));
+
+  for( i = 0; i < statTables.length; i++){
+    raidStatsMessages.push(await channel.send( '```' + statTables[i] + '```'));
+  }
+
+  let msg = await channel.send('', {
+    files : [
+      './out/stat-table.txt'
+    ]
+  });
+  raidStatsMessages.push(msg)
+}
+
+async function updateKillsChannel(client) {
+
+  let channel = await client.channels.fetch(env.KILLS_CHANNEL_ID);
+
+  //If first fight of the raid, send the header
+  if(killsMessages.length === 0) {
+    let dt = new Date();
+    channel.send(`***----- ${dt.getFullYear()}-${dt.getMonth() + 1}-${dt.getDate()} ${dt.getHours()}:${dt.getMinutes()} -----***`)
+  }
+  else { //else delete messages from this raid before sending new ones.
+    for(let i = 0; i < killsMessages.length; i++) {
+      killsMessages[i].delete();
+    }
+  }
+  let reportHeaderEmbed = new Discord.MessageEmbed()
+  .setColor('#FB512D')
+  .setTitle('Kill Stats')
+  .addFields(
+    {
+      name : 'K/D Table',
+      value: `\`\`\`${statTable.getSizedStatTables(await statTable.getKillStats())}\`\`\``,
+    }
+  )
+  .setTimestamp()
+
+  killsMessages.push(await channel.send(reportHeaderEmbed));
 }
 
 async function runReport(filename, cb) {

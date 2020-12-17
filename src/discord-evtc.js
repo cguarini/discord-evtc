@@ -3,12 +3,14 @@ const client = new Discord.Client();
 const fs = require('fs');
 const chokidar = require('chokidar');
 const config = JSON.parse(fs.readFileSync('./res/config.json', 'utf8'));
-const report = require('./components/report');
-const statTable = require('./components/stat-table');
-const { getStatTable } = require('./components/stat-table');
+const report = require('./modules/report');
+const statTable = require('./modules/stat-table');
+const { getStatTable } = require('./modules/stat-table');
 
+const APP_ENV = config.env.APP_ENV;
+const env = config.env[APP_ENV];
 
-const DISCORD_TOKEN = config.DISCORD_TOKEN;
+const DISCORD_TOKEN = env.DISCORD_TOKEN;
 let processedFiles = new Map();
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
@@ -38,8 +40,7 @@ client.on('message', async (message) => {
     }));
 
     for( i = 0; i < statTables.length; i++){
-      str = `Stat Table ${i + 1} of ${statTables.length}\n`
-      message.channel.send(str + '```' + statTables[i] + '```')
+      message.channel.send( '```' + statTables[i] + '```');
     }
 
   }
@@ -62,38 +63,6 @@ client.on('message', async (message) => {
 
 });
 
-async function postEmbed(embed) {
-
-  let channel = await client.channels.fetch(config.DISCORD_CHANNEL_ID);
-
-  await channel.send(embed);
-}
-
-async function postEnemyStatTable(statTables) {
-  let channel = await client.channels.fetch(config.DISCORD_CHANNEL_ID);
-
-  for( i = 0; i < statTables.length; i++){
-    str = `Stats for Enemy Players as a whole.\n`
-    channel.send(str + '```' + statTables[i] + '```')
-  }
-}
-
-async function postHtml(htmlFilename) {
-  client.channels.fetch(config.DISCORD_CHANNEL_ID).then( channel => {
-    channel.send("", {
-      files : [
-        "./input/" + htmlFilename,
-      ]
-    });
-  });
-}
-
-async function postFightStatsHeader(fightObj) {
-  client.channels.fetch(config.DISCORD_CHANNEL_ID).then( channel => {
-    let header = `__**Reports for fight on ${fightObj.map} lasting ${fightObj.duration}**__`
-    channel.send(header);
-  });
-}
 
 //Watch the log directory, waiting for arcdps to dump log files
 chokidar.watch(config.EVTC_WATCH_DIR, {
