@@ -29,7 +29,7 @@ client.on('message', async (message) => {
   //Display table of accumulated raid stats
   if (params[0] === '!raidStats') {
 
-    let statTables = statTable.getSizedStatTables(getStatTable(sortStr, () => {
+    let statTables = statTable.getSizedStatTables(await getStatTable(sortStr, () => {
       message.channel.send('', {
         files : [
           './out/stat-table.txt'
@@ -44,16 +44,29 @@ client.on('message', async (message) => {
 
   }
 
+  if (params[0] === '!killStats') {
+    let reportHeaderEmbed = new Discord.MessageEmbed()
+        .setColor('#FB512D')
+        .setTitle('Kill Stats')
+        .addFields(
+          {
+            name : 'K/D Table',
+            value: `\`\`\`${statTable.getSizedStatTables(await statTable.getKillStats())}\`\`\``,
+          }
+        )
+        .setTimestamp()
+
+        message.channel.send(reportHeaderEmbed);
+
+  }
+
 });
 
-async function postSquadStatTable(statTables) {
+async function postEmbed(embed) {
 
   let channel = await client.channels.fetch(config.DISCORD_CHANNEL_ID);
 
-  for( i = 0; i < statTables.length; i++){
-    str = `Squad Stat Table ${i + 1} of ${statTables.length}\n`
-    channel.send(str + '```' + statTables[i] + '```')
-  }
+  await channel.send(embed);
 }
 
 async function postEnemyStatTable(statTables) {
@@ -96,7 +109,7 @@ chokidar.watch(config.EVTC_WATCH_DIR, {
   //Make sure we haven't already processed this file
   if (!(filename in processedFiles)) {
     processedFiles.set(filename, true);
-    report.runAsciiReport(filename, postFightStatsHeader, postSquadStatTable, postEnemyStatTable, postHtml);
+    report.runAsciiReport(filename, client);
   }
 
 });

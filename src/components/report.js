@@ -5,9 +5,11 @@ const util = require('util');
 const exec = util.promisify( require( 'child_process' ).exec);
 const statTable = require('./stat-table');
 const path = require('path');
-const { getEnemyTable } = require('./stat-table');
+const Discord = require('discord.js');
+const { addFightToLeaderboard, getSquadTable, getKDTable, getStatTable, getDamageTable } = require('./fight-report');
 
-async function runAsciiReport(filename, postFightStatsHeader, postSquadStats, postEnemyStats, postHtml) {
+
+async function runAsciiReport(filename, client) {
     //Parse the evtc file into HTML and JSON
     await parseEvtc(filename);
     let htmlFilename = filename.split('.')[0] + '_wvw_kill.html';
@@ -15,18 +17,62 @@ async function runAsciiReport(filename, postFightStatsHeader, postSquadStats, po
     //Run the JSON leaderboard parsing asynchronously
     let jsonFilename = ('./input/' + filename.split('.')[0] + '_wvw_kill.json');
     //Parse JSON to leaderboard and post fight stats
-    statTable.addFightToLeaderboard(jsonFilename).then( async (fightObj) => {
+    addFightToLeaderboard(jsonFilename).then( async (fightObj) => {
 
-      //Post header message
-      await postFightStatsHeader(fightObj);
+      //Get fight-reports channel as outlined in config
+      let reportChannel = await client.channels.fetch(config.DISCORD_CHANNEL_ID);
+      let tableChannel = await client.channels.fetch(config.TABLE_CHANNEL_ID);
 
-      //Post friendly and enemy stats
-      await postSquadStats(statTable.getSizedStatTables(await statTable.getFriendlyTable(fightObj)));
-      await postEnemyStats(statTable.getSizedStatTables(await statTable.getEnemyTable(fightObj)));
+      let squadStats = statTable.getSizedStatTables(await statTable.getFriendlyTable(fightObj));
 
-    }).then( () => {
-      //Post html report
-      postHtml(htmlFilename)
+      //Create header
+      let reportHeaderEmbed = new Discord.MessageEmbed()
+        .setColor('#0099ff')
+        .setAuthor(fightObj.map)
+        .setTitle('Fight Report')
+        .setURL(fightObj.link)
+        .setDescription(`${fightObj.duration} - Click link above for full report`)
+        .addFields(
+          {
+            name : 'Squad Stats',
+            value: `\`\`\`${statTable.getSizedStatTables(await getSquadTable(fightObj))}\`\`\``,
+          },
+          { 
+            name: 'Enemy Stats', 
+            value: `\`\`\`${statTable.getSizedStatTables(await statTable.getEnemyTable(fightObj))}\`\`\``,
+            inline: true 
+          },
+          {
+            name : 'Top Damage',
+            value: `\`\`\`${statTable.getSizedStatTables(await getDamageTable(fightObj, 5))}\`\`\``,
+          },
+          {
+            name : 'Top Cleansers',
+            value: `\`\`\`${statTable.getSizedStatTables(await getStatTable(fightObj, 'cleanses', 'Cleanses', 5))}\`\`\``,
+          },
+          {
+            name : 'Top Strips',
+            value: `\`\`\`${statTable.getSizedStatTables(await getStatTable(fightObj, 'strips', 'Strips', 3))}\`\`\``,
+          },
+          {
+            name : 'Kills/Deaths',
+            value: `\`\`\`${statTable.getSizedStatTables(await getKDTable(fightObj))}\`\`\`
+                    > * Minimum enemy deaths, estimated by squad kills`,
+          },
+        )
+        .setTimestamp()
+        .setFooter(`Commander ${fightObj.commander}`);
+
+      reportChannel.send(reportHeaderEmbed);
+
+      //Send Stat Tables
+      for(let i = 0; i < squadStats.length; i++){
+        tableChannel.send(`\`\`\`${squadStats[i]}\`\`\``);
+      }
+
+
+      
+
     });
   
 }
