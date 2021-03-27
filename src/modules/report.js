@@ -95,6 +95,7 @@ async function updateRaidStatsChannel(client) {
     for(let i = 0; i < raidStatsMessages.length; i++) {
       raidStatsMessages[i].delete();
     }
+    raidStatsMessages = [];
   }
 
   let statTables = statTable.getSizedStatTables(await statTable.getStatTable('Damage'));
@@ -124,6 +125,7 @@ async function updateKillsChannel(client) {
     for(let i = 0; i < killsMessages.length; i++) {
       killsMessages[i].delete();
     }
+    killsMessages = [];
   }
   let reportHeaderEmbed = new Discord.MessageEmbed()
   .setColor('#FB512D')
