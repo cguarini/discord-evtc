@@ -109,9 +109,9 @@ async function saveFightToDb(fightObj) {
         let fightId = await createFight(fightObj);
 
         //Create enemy stats in parallel to player stats
-        createEnemyStats(fightId, fightObj.enemyData);
-        for(let i = 0; i < fightObj.playerList.length; i++) {
-            let fightStatObj = fightObj.playerList[i];
+        createEnemyStats(fightId, fightObj.targetData);
+        for(let i = 0; i < fightObj.squadList.length; i++) {
+            let fightStatObj = fightObj.squadList[i];
             createPlayer(fightId, fightStatObj);
         }
 
