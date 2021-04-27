@@ -7,6 +7,7 @@ const statTable = require('./stat-table');
 const path = require('path');
 const Discord = require('discord.js');
 const { addFightToLeaderboard, getSquadTable, getKDTable, getStatTable, getDamageTable, getEnemyTable } = require('./fight-report');
+const { getProfessionStats } = require('./profession-report');
 
 const APP_ENV = config.env.APP_ENV;
 const env = config.env[APP_ENV];
@@ -76,6 +77,7 @@ async function runAsciiReport(filename, client) {
 
       updateRaidStatsChannel(client);
       updateKillsChannel(client);
+      runProfessionReport(client, fightObj.fullStats);
 
     });
 
@@ -140,6 +142,42 @@ async function updateKillsChannel(client) {
 
   killsMessages.push(await channel.send(reportHeaderEmbed));
 }
+
+async function runProfessionReport(client, fullStats) {
+
+  let channel = await client.channels.fetch(env.PROFESSION_CHANNEL_ID);
+
+  let professionStats = await getProfessionStats(fullStats);
+
+  //Create header
+  let reportHeaderEmbed = new Discord.MessageEmbed()
+  .addFields(
+    {
+      name : 'Scrapper Stats',
+      value: `\`\`\`${professionStats['scrappers']}\`\`\``,
+    },
+    {
+      name : 'Firebrand Stats',
+      value: `\`\`\`${professionStats['firebrands']}\`\`\``,
+    },
+    {
+      name : 'Herald Stats',
+      value: `\`\`\`${professionStats['heralds']}\`\`\``,
+    },
+    {
+      name : 'Spellbreaker Stats',
+      value: `\`\`\`${professionStats['spellBreakers']}\`\`\``,
+    },
+    {
+      name : 'Chrono Stats',
+      value: `\`\`\`${professionStats['chronos']}\`\`\``,
+    },
+  )
+  .setTimestamp();
+
+  channel.send(reportHeaderEmbed);
+}
+
 
 async function runReport(filename, cb) {
 

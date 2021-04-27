@@ -20,7 +20,8 @@ async function addFightToLeaderboard(fp) {
         squadList : [],
         targetData : {},
         link : fightStats.uploadLinks[0],
-        commander : ""
+        commander : "",
+        fullStats : fightStats
     };
 
     //Loop through each player in the fight
