@@ -19,7 +19,7 @@ async function addFightToLeaderboard(fp) {
         duration : fightStats.duration,
         squadList : [],
         targetData : {},
-        link : fightStats.uploadLinks[0],
+        link : (fightStats.uploadLinks[0] === "Upload process failed" ? "https://dps.report/" : fightStats.uploadLinks[0]),
         commander : "",
         fullStats : fightStats
     };

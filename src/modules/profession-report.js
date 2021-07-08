@@ -84,7 +84,7 @@ async function getScrapperTable(scrapperStats) {
         let player = profArrray[i];
         profTable.push([player.name, player.dodges, player.stab.toFixed(2),
                 player.aegis.toFixed(2), player.protection.toFixed(2),
-                player.resistance]);
+                player.resistance.toFixed(2)]);
     }
 
     //Create ascii table
