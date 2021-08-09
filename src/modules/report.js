@@ -169,9 +169,14 @@ async function runProfessionReport(client, fullStats) {
       value: `\`\`\`${professionStats['spellBreakers']}\`\`\``,
     },
     {
+      name : 'Soulbeast Stats',
+      value: `\`\`\`${professionStats['tempests']}\`\`\``,
+    },
+    {
       name : 'Chrono Stats',
       value: `\`\`\`${professionStats['chronos']}\`\`\``,
     },
+    
   )
   .setTimestamp();
 

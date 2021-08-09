@@ -1,5 +1,5 @@
 let table = require('text-table');
-const { getScrapperStats, getFirebrandStats, getHeraldStats, getSpellBreakerStats, getChronoStats } = require("./components/profession");
+const { getScrapperStats, getFirebrandStats, getHeraldStats, getSpellBreakerStats, getChronoStats, getTempestStats } = require("./components/profession");
 const { getSquadStats } = require("./components/squad");
 
 /**
@@ -30,6 +30,7 @@ async function getProfessionStats(fullStats) {
     let heralds = await getHeraldStats(professionMap['Herald']);
     let spellBreakers = await getSpellBreakerStats(professionMap['Spellbreaker'], fullStats.targets);
     let chronos = await getChronoStats(professionMap['Chronomancer'], fullStats.targets);
+    let tempests = await getTempestStats(professionMap['Soulbeast'], fullStats.targets);
 
     let tableMap = {};
     tableMap.scrappers = await getScrapperTable(scrappers);
@@ -37,6 +38,7 @@ async function getProfessionStats(fullStats) {
     tableMap.heralds = await getHeraldTable(heralds);
     tableMap.spellBreakers = await getSpellBreakerTable(spellBreakers);
     tableMap.chronos = await getChronoTable(chronos);
+    tableMap.tempests = await getTempestTable(tempests);
     return tableMap;
    
 }
@@ -169,6 +171,32 @@ async function getScrapperTable(scrapperStats) {
     let statTable = table(
         profTable,
         {align : [ 'l', 'l' , 'l', 'l']}
+    );
+
+    return statTable;
+}
+
+/**
+ * Return formatted scrapper table
+ * @param {*} profStats - profession stats object 
+ * @returns 
+ */
+ async function getTempestTable(profStats) {
+
+    //Create table headers
+    let headers = ['Name', 'Immob', 'Cleanses'];
+    //Create data row
+    let profArrray = profStats.stats;
+    let profTable = [headers];
+    for(let i = 0;  i < profArrray.length; i++){
+        let player = profArrray[i];
+        profTable.push([player.name, player.immob.toFixed(2), player.cleanses]);
+    }
+
+    //Create ascii table
+    let statTable = table(
+        profTable,
+        {align : [ 'l', 'l', 'l' ]}
     );
 
     return statTable;

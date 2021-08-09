@@ -188,6 +188,43 @@ async function getSpellBreakerStats(sbArray, targets) {
     return sbStats;
 }
 
+async function getTempestStats(playerArray, targets) {
+
+    
+    //Return object
+    let tempestStats = {
+        profession : "Any",
+        stats : []
+    };
+
+    if(!playerArray || playerArray === undefined) {
+        playerArray = [];
+    }
+
+    //Parse stats from each player object in scrapper array
+    for( let i in playerArray) { 
+
+        let player = playerArray[i];
+        let playerStats = {};
+
+        playerStats.name = player.name;
+        playerStats.cleanses = player.support[0].condiCleanse + player.support[0].condiCleanseSelf;
+        playerStats.immob = await getAvgCondiGeneration(targets, player.name, 727);
+
+
+        //Done parsing, add stats to main object
+        tempestStats.stats.push(playerStats);
+    }
+
+    tempestStats.stats.sort( (a, b) => {
+        return a.immob - b.immob;
+    });
+
+
+
+    return tempestStats;
+}
+
 async function getChronoStats(profArray, targets) {
 
     
@@ -226,5 +263,6 @@ module.exports = {
     getFirebrandStats,
     getHeraldStats,
     getSpellBreakerStats,
-    getChronoStats
+    getChronoStats,
+    getTempestStats
 }

@@ -3,6 +3,7 @@ let table = require('text-table');
 const { addPlayerToSquadStats } = require('./components/squad');
 const { getTargetStats } = require('./components/target');
 const { saveFightToDb } = require('./persistFights');
+const { persistDataToSheets } = require('./readers/sheetReader');
 const config = JSON.parse(fs.readFileSync('./res/config.json', 'utf8'));
 
 /**
@@ -13,6 +14,8 @@ async function addFightToLeaderboard(fp) {
     //Read in JSON file
     let file = fs.readFileSync(fp);
     let fightStats = await JSON.parse(file);
+
+    persistDataToSheets(fightStats);
 
     let fightObj = {
         map : fightStats.fightName,
