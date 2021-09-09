@@ -30,7 +30,7 @@ async function getProfessionStats(fullStats) {
     let heralds = await getHeraldStats(professionMap['Herald']);
     let spellBreakers = await getSpellBreakerStats(professionMap['Spellbreaker'], fullStats.targets);
     let chronos = await getChronoStats(professionMap['Chronomancer'], fullStats.targets);
-    let tempests = await getTempestStats(professionMap['Soulbeast'], fullStats.targets);
+    let tempests = await getTempestStats(professionMap['Scourge'], fullStats.targets);
 
     let tableMap = {};
     tableMap.scrappers = await getScrapperTable(scrappers);
@@ -184,13 +184,13 @@ async function getScrapperTable(scrapperStats) {
  async function getTempestTable(profStats) {
 
     //Create table headers
-    let headers = ['Name', 'Immob', 'Cleanses'];
+    let headers = ['Name', 'Damage', 'Strips', 'Interrupts'];
     //Create data row
     let profArrray = profStats.stats;
     let profTable = [headers];
     for(let i = 0;  i < profArrray.length; i++){
         let player = profArrray[i];
-        profTable.push([player.name, player.immob.toFixed(2), player.cleanses]);
+        profTable.push([player.name, player.damage, player.strips, player.interrupts]);
     }
 
     //Create ascii table

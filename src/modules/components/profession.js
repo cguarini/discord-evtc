@@ -207,9 +207,13 @@ async function getTempestStats(playerArray, targets) {
         let player = playerArray[i];
         let playerStats = {};
 
+        let offensiveStats = await accumulate(player.dpsTargets);
+
+
         playerStats.name = player.name;
-        playerStats.cleanses = player.support[0].condiCleanse + player.support[0].condiCleanseSelf;
-        playerStats.immob = await getAvgCondiGeneration(targets, player.name, 727);
+        playerStats.damage = offensiveStats.damage;
+        playerStats.strips = player.support[0].boonStrips;
+        playerStats.interrupts = player.statsAll[0].interrupts;
 
 
         //Done parsing, add stats to main object

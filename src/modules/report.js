@@ -169,7 +169,7 @@ async function runProfessionReport(client, fullStats) {
       value: `\`\`\`${professionStats['spellBreakers']}\`\`\``,
     },
     {
-      name : 'Soulbeast Stats',
+      name : 'Scourge Stats',
       value: `\`\`\`${professionStats['tempests']}\`\`\``,
     },
     {

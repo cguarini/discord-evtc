@@ -15,8 +15,6 @@ async function addFightToLeaderboard(fp) {
     let file = fs.readFileSync(fp);
     let fightStats = await JSON.parse(file);
 
-    persistDataToSheets(fightStats);
-
     let fightObj = {
         map : fightStats.fightName,
         duration : fightStats.duration,
@@ -45,6 +43,9 @@ async function addFightToLeaderboard(fp) {
     //Save the fight in the database, if the database is enabled.
     if(config.db.enabled){
         saveFightToDb(fightObj);
+    }
+    if(config.sheets.enabled) {
+        persistDataToSheets(fightObj);
     }
 
     return fightObj;
