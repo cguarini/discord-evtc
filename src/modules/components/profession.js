@@ -152,6 +152,45 @@ async function getHeraldStats(heraldArray) {
     return heraldStats;
 }
 
+async function getRenegadeStats(playerArray, targets) {
+
+    
+    //Return object
+    let renegadeStats = {
+        profession : "Any",
+        stats : []
+    };
+
+    if(!playerArray || playerArray === undefined) {
+        playerArray = [];
+    }
+
+    //Parse stats from each player object in scrapper array
+    for( let i in playerArray) { 
+
+        let player = playerArray[i];
+        let playerStats = {};
+
+        let offensiveStats = await accumulate(player.dpsTargets);
+
+
+        playerStats.name = player.name;
+        playerStats.damage = offensiveStats.damage;
+        playerStats.strips = player.support[0].boonStrips;
+        playerStats.alac = await getBuffGeneration(player.groupBuffs, 30328);
+
+
+        //Done parsing, add stats to main object
+        renegadeStats.stats.push(playerStats);
+    }
+
+    renegadeStats.stats.sort( (a, b) => {
+        return a.strips - b.strips;
+    });
+
+    return renegadeStats;
+}
+
 async function getSpellBreakerStats(sbArray, targets) {
 
     
@@ -268,5 +307,6 @@ module.exports = {
     getHeraldStats,
     getSpellBreakerStats,
     getChronoStats,
-    getTempestStats
+    getTempestStats,
+    getRenegadeStats
 }

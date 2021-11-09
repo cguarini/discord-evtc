@@ -31,13 +31,20 @@ async function runAsciiReport(filename, client) {
 
       let squadStats = statTable.getSizedStatTables(await statTable.getFriendlyTable(fightObj));
 
+      let classReport = await runProfessionReport(client, fightObj.fullStats);
+      if(!classReport.url){
+        console.log('Bad class report URL!');
+        classReport.url = '';
+      }
+      
+      updateRaidStatsChannel(client);
+      updateKillsChannel(client);
+      
       //Create header
       let reportHeaderEmbed = new Discord.MessageEmbed()
         .setColor('#0099ff')
-        .setAuthor(fightObj.map)
-        .setTitle('Fight Report')
-        .setURL(fightObj.link)
-        .setDescription(`${fightObj.duration} - Click link above for full report`)
+        .setTitle(fightObj.map)
+        .setDescription(`**[Fight Report](${fightObj.link})**\n**[Class Report](${classReport.url})**\n${fightObj.duration} - Click link above for full report`, classReport.url)
         .addFields(
           {
             name : 'Squad Stats',
@@ -74,10 +81,7 @@ async function runAsciiReport(filename, client) {
       for(let i = 0; i < squadStats.length; i++){
         tableChannel.send(`\`\`\`${squadStats[i]}\`\`\``);
       }
-
-      updateRaidStatsChannel(client);
-      updateKillsChannel(client);
-      runProfessionReport(client, fightObj.fullStats);
+      
 
     });
 
@@ -165,6 +169,10 @@ async function runProfessionReport(client, fullStats) {
       value: `\`\`\`${professionStats['heralds']}\`\`\``,
     },
     {
+      name : 'Renegade Stats',
+      value: `\`\`\`${professionStats['renegades']}\`\`\``
+    },
+    {
       name : 'Spellbreaker Stats',
       value: `\`\`\`${professionStats['spellBreakers']}\`\`\``,
     },
@@ -180,7 +188,7 @@ async function runProfessionReport(client, fullStats) {
   )
   .setTimestamp();
 
-  channel.send(reportHeaderEmbed);
+  return await channel.send(reportHeaderEmbed);
 }
 
 

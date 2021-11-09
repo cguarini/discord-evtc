@@ -1,5 +1,5 @@
 let table = require('text-table');
-const { getScrapperStats, getFirebrandStats, getHeraldStats, getSpellBreakerStats, getChronoStats, getTempestStats } = require("./components/profession");
+const { getScrapperStats, getFirebrandStats, getHeraldStats, getSpellBreakerStats, getChronoStats, getTempestStats, getRenegadeStats } = require("./components/profession");
 const { getSquadStats } = require("./components/squad");
 
 /**
@@ -28,6 +28,7 @@ async function getProfessionStats(fullStats) {
     let scrappers = await getScrapperStats(professionMap['Scrapper']);
     let firebrands = await getFirebrandStats(professionMap['Firebrand']);
     let heralds = await getHeraldStats(professionMap['Herald']);
+    let renegades = await getRenegadeStats(professionMap['Renegade']);
     let spellBreakers = await getSpellBreakerStats(professionMap['Spellbreaker'], fullStats.targets);
     let chronos = await getChronoStats(professionMap['Chronomancer'], fullStats.targets);
     let tempests = await getTempestStats(professionMap['Scourge'], fullStats.targets);
@@ -36,6 +37,7 @@ async function getProfessionStats(fullStats) {
     tableMap.scrappers = await getScrapperTable(scrappers);
     tableMap.firebrands = await getFirebrandTable(firebrands);
     tableMap.heralds = await getHeraldTable(heralds);
+    tableMap.renegades = await getRenegadeTable(renegades);
     tableMap.spellBreakers = await getSpellBreakerTable(spellBreakers);
     tableMap.chronos = await getChronoTable(chronos);
     tableMap.tempests = await getTempestTable(tempests);
@@ -197,6 +199,31 @@ async function getScrapperTable(scrapperStats) {
     let statTable = table(
         profTable,
         {align : [ 'l', 'l', 'l' ]}
+    );
+
+    return statTable;
+}
+
+/**
+ * Return formatted scrapper table
+ * @param {*} profStats - profession stats object 
+ * @returns 
+ */
+ async function getRenegadeTable(profStats) {
+    //Create table headers
+    let headers = ['Name', 'Damage', 'Strips', 'Alacrity'];
+    //Create data row
+    let profArrray = profStats.stats;
+    let profTable = [headers];
+    for(let i = 0;  i < profArrray.length; i++){
+        let player = profArrray[i];
+        profTable.push([player.name, player.damage, player.strips, player.alac.toFixed(2)]);
+    }
+
+    //Create ascii table
+    let statTable = table(
+        profTable,
+        {align : [ 'l', 'l', 'l', 'l' ]}
     );
 
     return statTable;
