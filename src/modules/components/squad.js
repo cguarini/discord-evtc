@@ -113,6 +113,7 @@ async function addPlayerToSquadStats(player) {
     //Add current fight statistics to the previous fights
     statObj.totalActiveTime += activeTime
     statObj.fightsParticipated += 1;
+    statObj.profession = await getProfessionShorthand(player.profession);
     statObj.damage += offensiveStats.damage;
     statObj.cleanses += supportStats.condiCleanse + supportStats.condiCleanseSelf;
     statObj.strips += supportStats.boonStrips;
@@ -131,6 +132,35 @@ async function addPlayerToSquadStats(player) {
     squadStats[accountId] = statObj;
 
     return fightStatObj;
+}
+
+async function getProfessionShorthand(profession) {
+
+    let shorthand = profession.substring(0,4);
+    switch(profession) {
+        case 'Firebrand':
+            shorthand = 'FB';
+            break;
+        case 'Scourge':
+            shorthand = 'Scrg';
+            break;
+        case 'Spellbreaker':
+            shorthand = 'SB';
+            break;
+        case 'Dragonhunter':
+            shorthand = 'DH';
+            break;
+        case 'Scrapper':
+            shorthand = 'Scrap';
+            break;
+        case 'Herald':
+            shorthand = 'Hrld';
+            break;
+        case 'Chronomancer':
+            shorthand = 'Chrono';
+            break;
+    }
+    return shorthand;
 }
 
 module.exports = {

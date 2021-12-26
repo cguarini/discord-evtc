@@ -157,34 +157,33 @@ async function runProfessionReport(client, fullStats) {
   let reportHeaderEmbed = new Discord.MessageEmbed()
   .addFields(
     {
-      name : 'Scrapper Stats',
-      value: `\`\`\`${professionStats['scrappers']}\`\`\``,
-    },
-    {
-      name : 'Firebrand Stats',
-      value: `\`\`\`${professionStats['firebrands']}\`\`\``,
-    },
-    {
-      name : 'Herald Stats',
+      name : '<:revenant_herald:712331090102190121> Herald Stats',
       value: `\`\`\`${professionStats['heralds']}\`\`\``,
     },
     {
-      name : 'Renegade Stats',
-      value: `\`\`\`${professionStats['renegades']}\`\`\``
-    },
-    {
-      name : 'Spellbreaker Stats',
-      value: `\`\`\`${professionStats['spellBreakers']}\`\`\``,
-    },
-    {
-      name : 'Scourge Stats',
+      name : '<:scourge_carry:889201786404085790> Scourge Stats',
       value: `\`\`\`${professionStats['tempests']}\`\`\``,
     },
     {
-      name : 'Chrono Stats',
+      name : '<:warrior_spellbreaker:712331090127486976> Spellbreaker Stats',
+      value: `\`\`\`${professionStats['spellBreakers']}\`\`\``,
+    },
+    {
+      name : '<:guardian_firebrand:712331089628364892> Firebrand Stats',
+      value: `\`\`\`${professionStats['firebrands']}\`\`\``,
+    },
+    {
+      name : '<:engineer_scrapper:712331089447747700> Scrapper Stats',
+      value: `\`\`\`${professionStats['scrappers']}\`\`\``,
+    },
+    {
+      name : '<:mesmer_chronomancer:712331090219761684> Chrono Stats',
       value: `\`\`\`${professionStats['chronos']}\`\`\``,
     },
-    
+    {
+      name : '<:revenant_renegade:712331090034950214> Renegade Stats',
+      value: `\`\`\`${professionStats['renegades']}\`\`\``
+    }
   )
   .setTimestamp();
 

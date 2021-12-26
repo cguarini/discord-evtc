@@ -156,9 +156,12 @@ async function getKDTable(fightObj) {
         downed += player.downed;
     }
 
-    let squadStats = ['Squad', enemy.downCount, enemy.deaths, deaths, (killed / downed).toFixed(2), (killed / deaths).toFixed(2)];
+    downed = (enemy.downCount > downed ? enemy.downCount : downed);
+    killed = (enemy.deaths > killed ? enemy.deaths : killed);
 
-    let enemyStats = ['Enemies', enemy.downed, enemy.killed, enemy.deaths, (enemy.killed / enemy.downed).toFixed(2), (enemy.killed / enemy.deaths).toFixed(2)];
+    let squadStats = ['Squad', downed, killed, deaths, (killed / downed).toFixed(2), (killed / deaths).toFixed(2)];
+
+    let enemyStats = ['Enemies', enemy.downed, enemy.killed, killed, (enemy.killed / enemy.downed).toFixed(2), (enemy.killed / killed).toFixed(2)];
 
     
     let tableArray = [headers, squadStats, enemyStats]
