@@ -123,5 +123,6 @@ async function saveFightToDb(fightObj) {
 
 module.exports = {
     saveFightToDb : saveFightToDb,
+    getRaidId : getRaidId
 
 }

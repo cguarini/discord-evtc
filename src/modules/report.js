@@ -7,6 +7,8 @@ const statTable = require('./stat-table');
 const path = require('path');
 const Discord = require('discord.js');
 const { addFightToLeaderboard, getSquadTable, getKDTable, getStatTable, getDamageTable, getEnemyTable } = require('./fight-report');
+const { getProfessionStats } = require('./profession-report');
+const { screenshotReportReplay } = require('./screenshot-report-replay');
 
 const APP_ENV = config.env.APP_ENV;
 const env = config.env[APP_ENV];
@@ -15,10 +17,10 @@ let raidStatsMessages = [];
 let killsMessages = [];
 
 async function runAsciiReport(filename, client) {
-    //Parse the evtc file into HTML and JSON
+    //Parse the evtc file into JSON
     await parseEvtc(filename);
-    let htmlFilename = filename.split('.')[0] + '_wvw_kill.html';
-  
+    //let htmlFilename = 'input\\' + filename.split('.')[0] + '_detailed_wvw_kill.html';
+
     //Run the JSON leaderboard parsing asynchronously
     let jsonFilename = ('./input/' + filename.split('.')[0] + '_detailed_wvw_kill.json');
     //Parse JSON to leaderboard and post fight stats
@@ -30,13 +32,35 @@ async function runAsciiReport(filename, client) {
 
       let squadStats = statTable.getSizedStatTables(await statTable.getFriendlyTable(fightObj));
 
+      //Get a link to the class report so that it can be attached to the fight report
+      let classReport = await runProfessionReport(client, fightObj.fullStats);
+      if(!classReport.url){
+        console.log('Bad class report URL!');
+        classReport.url = '';
+      }
+
+      //Attach screenshot of fight replay, if available
+      let attachment;
+      try {
+        await screenshotReportReplay(fightObj.link);
+        attachment = new Discord.MessageAttachment('./out/out-replay.png', 'replay.png');
+      } catch (e) {
+        console.log(`Encountered error when screenshotting. Attaching cats instead`)
+        console.log(e)
+        attachment = new Discord.MessageAttachment('./res/cats.jpg', 'replay.png');
+      }
+      
+      
+      updateRaidStatsChannel(client);
+      updateKillsChannel(client);
+      
       //Create header
       let reportHeaderEmbed = new Discord.MessageEmbed()
+        .attachFiles(attachment)
+        .setThumbnail('attachment://replay.png')
         .setColor('#0099ff')
-        .setAuthor(fightObj.map)
-        .setTitle('Fight Report')
-        .setURL(fightObj.link)
-        .setDescription(`${fightObj.duration} - Click link above for full report`)
+        .setTitle(fightObj.map)
+        .setDescription(`**[Fight Report](${fightObj.link})**\n**[Class Report](${classReport.url})**\n${fightObj.duration} - Click link above for full report`, classReport.url)
         .addFields(
           {
             name : 'Squad Stats',
@@ -73,9 +97,7 @@ async function runAsciiReport(filename, client) {
       for(let i = 0; i < squadStats.length; i++){
         tableChannel.send(`\`\`\`${squadStats[i]}\`\`\``);
       }
-
-      updateRaidStatsChannel(client);
-      updateKillsChannel(client);
+      
 
     });
 
@@ -140,6 +162,50 @@ async function updateKillsChannel(client) {
 
   killsMessages.push(await channel.send(reportHeaderEmbed));
 }
+
+async function runProfessionReport(client, fullStats) {
+
+  let channel = await client.channels.fetch(env.PROFESSION_CHANNEL_ID);
+
+  let professionStats = await getProfessionStats(fullStats);
+
+  //Create header
+  let reportHeaderEmbed = new Discord.MessageEmbed()
+  .addFields(
+    {
+      name : '<:revenant_herald:712331090102190121> Herald Stats',
+      value: `\`\`\`${professionStats['heralds']}\`\`\``,
+    },
+    {
+      name : '<:scourge_carry:889201786404085790> Scourge Stats',
+      value: `\`\`\`${professionStats['tempests']}\`\`\``,
+    },
+    {
+      name : '<:warrior_spellbreaker:712331090127486976> Spellbreaker Stats',
+      value: `\`\`\`${professionStats['spellBreakers']}\`\`\``,
+    },
+    {
+      name : '<:guardian_firebrand:712331089628364892> Firebrand Stats',
+      value: `\`\`\`${professionStats['firebrands']}\`\`\``,
+    },
+    {
+      name : '<:engineer_scrapper:712331089447747700> Scrapper Stats',
+      value: `\`\`\`${professionStats['scrappers']}\`\`\``,
+    },
+    {
+      name : '<:mesmer_chronomancer:712331090219761684> Chrono Stats',
+      value: `\`\`\`${professionStats['chronos']}\`\`\``,
+    },
+    {
+      name : '<:revenant_renegade:712331090034950214> Renegade Stats',
+      value: `\`\`\`${professionStats['renegades']}\`\`\``
+    }
+  )
+  .setTimestamp();
+
+  return await channel.send(reportHeaderEmbed);
+}
+
 
 async function runReport(filename, cb) {
 
