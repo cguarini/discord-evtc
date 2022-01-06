@@ -17,20 +17,10 @@ let raidStatsMessages = [];
 let killsMessages = [];
 
 async function runAsciiReport(filename, client) {
-    //Parse the evtc file into HTML and JSON
+    //Parse the evtc file into JSON
     await parseEvtc(filename);
-    let htmlFilename = 'input\\' + filename.split('.')[0] + '_detailed_wvw_kill.html';
+    //let htmlFilename = 'input\\' + filename.split('.')[0] + '_detailed_wvw_kill.html';
 
-    let attachment;
-
-    try {
-      await screenshotReportReplay(htmlFilename);
-      attachment = new Discord.MessageAttachment('./out/out-replay.png', 'replay.png');
-    } catch (e) {
-      console.log(`Encountered error when screenshotting. Attaching cats instead`)
-      attachment = new Discord.MessageAttachment('./res/cats.jpg', 'replay.png');
-    }
-  
     //Run the JSON leaderboard parsing asynchronously
     let jsonFilename = ('./input/' + filename.split('.')[0] + '_detailed_wvw_kill.json');
     //Parse JSON to leaderboard and post fight stats
@@ -42,11 +32,24 @@ async function runAsciiReport(filename, client) {
 
       let squadStats = statTable.getSizedStatTables(await statTable.getFriendlyTable(fightObj));
 
+      //Get a link to the class report so that it can be attached to the fight report
       let classReport = await runProfessionReport(client, fightObj.fullStats);
       if(!classReport.url){
         console.log('Bad class report URL!');
         classReport.url = '';
       }
+
+      //Attach screenshot of fight replay, if available
+      let attachment;
+      try {
+        await screenshotReportReplay(fightObj.link);
+        attachment = new Discord.MessageAttachment('./out/out-replay.png', 'replay.png');
+      } catch (e) {
+        console.log(`Encountered error when screenshotting. Attaching cats instead`)
+        console.log(e)
+        attachment = new Discord.MessageAttachment('./res/cats.jpg', 'replay.png');
+      }
+      
       
       updateRaidStatsChannel(client);
       updateKillsChannel(client);

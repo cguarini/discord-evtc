@@ -2,6 +2,12 @@ const puppeteer = require('puppeteer');
 const path = require('path');
 
 async function screenshotReportReplay(fp) {
+
+    //default path, upload to dps.report failed, throw error
+    if(fp == 'https://dps.report/') {
+        throw 'Upload to dps.report failed!';
+    }
+
     //Open HTML file in headless chrome browser
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
@@ -10,7 +16,7 @@ async function screenshotReportReplay(fp) {
     console.log(fp)
     console.log(file)
     
-    await page.goto(`file:///${file}`, {waitUntil: 'networkidle2'});
+    await page.goto(fp, {waitUntil: 'networkidle2'});
     await page.setViewport({
         width : 1920,
         height : 1080,
