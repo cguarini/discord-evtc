@@ -3,6 +3,7 @@ let table = require('text-table');
 const { addPlayerToSquadStats } = require('./components/squad');
 const { getTargetStats } = require('./components/target');
 const { saveFightToDb } = require('./persistFights');
+const { persistDataToSheets } = require('./readers/sheetReader');
 const config = JSON.parse(fs.readFileSync('./res/config.json', 'utf8'));
 
 /**
@@ -19,8 +20,9 @@ async function addFightToLeaderboard(fp) {
         duration : fightStats.duration,
         squadList : [],
         targetData : {},
-        link : fightStats.uploadLinks[0],
-        commander : ""
+        link : (fightStats.uploadLinks[0] === "Upload process failed" ? "https://dps.report/" : fightStats.uploadLinks[0]),
+        commander : "",
+        fullStats : fightStats
     };
 
     //Loop through each player in the fight
@@ -41,6 +43,9 @@ async function addFightToLeaderboard(fp) {
     //Save the fight in the database, if the database is enabled.
     if(config.db.enabled){
         saveFightToDb(fightObj);
+    }
+    if(config.sheets.enabled) {
+        persistDataToSheets(fightObj);
     }
 
     return fightObj;
@@ -151,9 +156,12 @@ async function getKDTable(fightObj) {
         downed += player.downed;
     }
 
-    let squadStats = ['Squad', enemy.downCount, enemy.deaths, deaths, (killed / downed).toFixed(2), (killed / deaths).toFixed(2)];
+    downed = (enemy.downCount > downed ? enemy.downCount : downed);
+    killed = (enemy.deaths > killed ? enemy.deaths : killed);
 
-    let enemyStats = ['Enemies', enemy.downed, enemy.killed, enemy.deaths, (enemy.killed / enemy.downed).toFixed(2), (enemy.killed / enemy.deaths).toFixed(2)];
+    let squadStats = ['Squad', downed, killed, deaths, (killed / downed).toFixed(2), (killed / deaths).toFixed(2)];
+
+    let enemyStats = ['Enemies', enemy.downed, enemy.killed, killed, (enemy.killed / enemy.downed).toFixed(2), (enemy.killed / killed).toFixed(2)];
 
     
     let tableArray = [headers, squadStats, enemyStats]

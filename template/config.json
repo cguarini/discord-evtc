@@ -1,0 +1,34 @@
+{
+    "env" : {
+        "APP_ENV" : "prod",
+        "dev" : {
+            "DISCORD_TOKEN" : "",
+            "DISCORD_CHANNEL_ID" : "",
+            "TABLE_CHANNEL_ID" : "",
+            "RAIDSTATS_CHANNEL_ID" : "",
+            "KILLS_CHANNEL_ID" : "",
+            "PROFESSION_CHANNEL_ID" : ""
+        },
+        "prod" : {
+            "DISCORD_TOKEN" : "",
+            "DISCORD_CHANNEL_ID" : "",
+            "TABLE_CHANNEL_ID" : "",
+            "RAIDSTATS_CHANNEL_ID" : "",
+            "KILLS_CHANNEL_ID" : "",
+            "PROFESSION_CHANNEL_ID" : ""
+        }
+    },
+    "EVTC_WATCH_DIR" : "C:\\Users\\%username%\\Documents\\Guild Wars 2\\addons\\arcdps\\arcdps.cbtlogs\\WvW",
+    "LOG_SAVE_PATH" : "\"C:\\Users\\%username%\\Documents\\Guild Wars 2\\addons\\arcdps\\arcdps.cbtlogs\\WvW\"",
+    "PARSER_EXE" : ".\\libs\\GW2EI\\GuildWars2EliteInsights.exe",
+    "PARSER_CONF" : ".\\res\\parser.conf",
+    "HTML_WATCH_DIR" : "/input",
+    "OUTPUT_DIR" : "/out/",
+    "db" : {
+        "enabled" : false,
+        "server" : "localhost\\SQLEXPRESS",
+        "database" : "FightReports",
+        "user" : "",
+        "password" : ""
+    }
+}

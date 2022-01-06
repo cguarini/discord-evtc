@@ -89,8 +89,11 @@ async function getKillStats() {
         count++;
     }
 
-    let squadStats = ['Squad', Math.round(fightsParticipated / targetStats.fights), targetStats.downCount, targetStats.deaths, deaths, (killed / downed).toFixed(2), (killed / deaths).toFixed(2)];
-    let enemyStats = ['Enemy', Math.round(targetStats.count / targetStats.fights), targetStats.downed, targetStats.killed, targetStats.deaths, (targetStats.killed / targetStats.downed).toFixed(2), (targetStats.killed / targetStats.deaths).toFixed(2)]
+    downed = (targetStats.downCount > downed ? targetStats.downCount : downed);
+    killed = (targetStats.deaths > killed ? targetStats.deaths : killed);
+
+    let squadStats = ['Squad', Math.round(fightsParticipated / targetStats.fights), downed, killed, deaths, (killed / downed).toFixed(2), (killed / deaths).toFixed(2)];
+    let enemyStats = ['Enemy', Math.round(targetStats.count / targetStats.fights), targetStats.downed, targetStats.killed, killed, (targetStats.killed / targetStats.downed).toFixed(2), (targetStats.killed / killed).toFixed(2)]
 
     
     let tableArray = [headers, squadStats, enemyStats]
@@ -110,7 +113,7 @@ async function getKillStats() {
 async function getStatTable(sortStr) {
 
     //Create stat table header row
-    let headers = ['Account', 'Characters', 'Fights', 'DPS', 'Damage', 'Cleanses', 'Strips', 'Stab', 'Prot', 'Dodges', 'Dist', 'Downs', 'Deaths', 'Time'];
+    let headers = ['Account', 'Characters', 'Prof', 'Fights', 'DPS', 'Damage', 'Cleanses', 'Strips', 'Stab', 'Prot', 'Dodges', 'Downs', 'Deaths'];
 
     //Add player statistics to stat table
     let players = [];
@@ -129,12 +132,11 @@ async function getStatTable(sortStr) {
         if(charactersStr.length > 25) {
             charactersStr = charactersStr.slice(0,25) + '...';
         }
-        let stats =  [accountId, charactersStr, statObj.fightsParticipated,
+        let stats =  [accountId, charactersStr, statObj.profession, statObj.fightsParticipated,
              Math.round(statObj.damage /(statObj.totalActiveTime / 1000)),
              statObj.damage, statObj.cleanses, statObj.strips,
              (statObj.stabUptime / statObj.totalActiveTime).toFixed(2), (statObj.protUptime / statObj.totalActiveTime).toFixed(2),
-             statObj.dodges, Math.round((statObj.distance / statObj.totalActiveTime)),
-             statObj.downs, statObj.deaths, `${Math.floor((statObj.fightTime / 1000) / 60)}m ${Math.round((statObj.fightTime / 1000)) % 60}s`];
+             statObj.dodges, statObj.downs, statObj.deaths];
         players.push(stats);
     }
 

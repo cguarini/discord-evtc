@@ -69,16 +69,21 @@ chokidar.watch(config.EVTC_WATCH_DIR, {
   awaitWriteFinish : true,
   ignoreInitial :  true
 }).on('add', async (path) => {
-
-  console.log(path);
   let pathArray = path.split('\\');
   let filename = pathArray[pathArray.length - 1];
-  console.log(filename);
+  console.log(`Beginning processing of ${filename}`);
 
   //Make sure we haven't already processed this file
   if (!(filename in processedFiles)) {
     processedFiles.set(filename, true);
-    report.runAsciiReport(filename, client);
+
+
+    try {
+      report.runAsciiReport(filename, client);
+    } catch (e) {
+      console.log(`Failed to process file ${filename}, bot is still running though!`);
+    }
+
   }
 
 });
