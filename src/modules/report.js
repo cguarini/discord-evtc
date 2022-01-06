@@ -8,6 +8,7 @@ const path = require('path');
 const Discord = require('discord.js');
 const { addFightToLeaderboard, getSquadTable, getKDTable, getStatTable, getDamageTable, getEnemyTable } = require('./fight-report');
 const { getProfessionStats } = require('./profession-report');
+const { screenshotReportReplay } = require('./screenshot-report-replay');
 
 const APP_ENV = config.env.APP_ENV;
 const env = config.env[APP_ENV];
@@ -18,7 +19,17 @@ let killsMessages = [];
 async function runAsciiReport(filename, client) {
     //Parse the evtc file into HTML and JSON
     await parseEvtc(filename);
-    let htmlFilename = filename.split('.')[0] + '_wvw_kill.html';
+    let htmlFilename = 'input\\' + filename.split('.')[0] + '_detailed_wvw_kill.html';
+
+    let attachment;
+
+    try {
+      await screenshotReportReplay(htmlFilename);
+      attachment = new Discord.MessageAttachment('./out/out-replay.png', 'replay.png');
+    } catch (e) {
+      console.log(`Encountered error when screenshotting. Attaching cats instead`)
+      attachment = new Discord.MessageAttachment('./res/cats.jpg', 'replay.png');
+    }
   
     //Run the JSON leaderboard parsing asynchronously
     let jsonFilename = ('./input/' + filename.split('.')[0] + '_detailed_wvw_kill.json');
@@ -42,6 +53,8 @@ async function runAsciiReport(filename, client) {
       
       //Create header
       let reportHeaderEmbed = new Discord.MessageEmbed()
+        .attachFiles(attachment)
+        .setThumbnail('attachment://replay.png')
         .setColor('#0099ff')
         .setTitle(fightObj.map)
         .setDescription(`**[Fight Report](${fightObj.link})**\n**[Class Report](${classReport.url})**\n${fightObj.duration} - Click link above for full report`, classReport.url)
