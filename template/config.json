@@ -1,34 +1,56 @@
 {
-    "env" : {
-        "APP_ENV" : "prod",
-        "dev" : {
-            "DISCORD_TOKEN" : "",
-            "DISCORD_CHANNEL_ID" : "",
-            "TABLE_CHANNEL_ID" : "",
-            "RAIDSTATS_CHANNEL_ID" : "",
-            "KILLS_CHANNEL_ID" : "",
-            "PROFESSION_CHANNEL_ID" : ""
+    "env": {
+        "APP_ENV": "prod",
+        "dev": {
+            "DISCORD_TOKEN": "",
+            "DISCORD_CHANNEL_ID": "",
+            "TABLE_CHANNEL_ID": "",
+            "RAIDSTATS_CHANNEL_ID": "",
+            "KILLS_CHANNEL_ID": "",
+            "PROFESSION_CHANNEL_ID": ""
         },
-        "prod" : {
-            "DISCORD_TOKEN" : "",
-            "DISCORD_CHANNEL_ID" : "",
-            "TABLE_CHANNEL_ID" : "",
-            "RAIDSTATS_CHANNEL_ID" : "",
-            "KILLS_CHANNEL_ID" : "",
-            "PROFESSION_CHANNEL_ID" : ""
+        "prod": {
+            "DISCORD_TOKEN": "",
+            "DISCORD_CHANNEL_ID": "",
+            "TABLE_CHANNEL_ID": "",
+            "RAIDSTATS_CHANNEL_ID": "",
+            "KILLS_CHANNEL_ID": "",
+            "PROFESSION_CHANNEL_ID": ""
         }
     },
-    "EVTC_WATCH_DIR" : "C:\\Users\\%username%\\Documents\\Guild Wars 2\\addons\\arcdps\\arcdps.cbtlogs\\WvW",
-    "LOG_SAVE_PATH" : "\"C:\\Users\\%username%\\Documents\\Guild Wars 2\\addons\\arcdps\\arcdps.cbtlogs\\WvW\"",
-    "PARSER_EXE" : ".\\libs\\GW2EI\\GuildWars2EliteInsights.exe",
-    "PARSER_CONF" : ".\\res\\parser.conf",
-    "HTML_WATCH_DIR" : "/input",
-    "OUTPUT_DIR" : "/out/",
-    "db" : {
-        "enabled" : false,
-        "server" : "localhost\\SQLEXPRESS",
-        "database" : "FightReports",
-        "user" : "",
-        "password" : ""
+    "DISCORD_TOKEN": "",
+    "DISCORD_CHANNEL_ID": "",
+    "TABLE_CHANNEL_ID": "",
+    "EVTC_WATCH_DIR": "C:\\Users\\%username%\\Documents\\Guild Wars 2\\addons\\arcdps\\arcdps.cbtlogs\\WvW",
+    "LOG_SAVE_PATH": "\"C:\\Users\\%username%\\Documents\\Guild Wars 2\\addons\\arcdps\\arcdps.cbtlogs\\WvW\"",
+    "PARSER_EXE": ".\\libs\\GW2EI\\GuildWars2EliteInsights.exe",
+    "PARSER_CONF": ".\\res\\parser.conf",
+    "HTML_WATCH_DIR": "/input",
+    "OUTPUT_DIR": "/out/",
+    "db": {
+        "enabled": false,
+        "server": "localhost\\SQLEXPRESS",
+        "database": "",
+        "user": "dev1",
+        "password": ""
+    },
+    "sheets": {
+        "enabled": false,
+        "key": "",
+        "BuffMapSheetId": "",
+        "DebuffsSheetId" : "",
+        "installed": {
+            "client_id": "",
+            "project_id": "",
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "token_uri": "https://oauth2.googleapis.com/token",
+            "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+            "client_secret": "",
+            "redirect_uris": [
+            "urn:ietf:wg:oauth:2.0:oob",
+            "http://localhost"
+            ]
+        }
+          
     }
 }
